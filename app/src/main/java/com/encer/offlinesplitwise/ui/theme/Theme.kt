@@ -1,6 +1,5 @@
 package com.encer.offlinesplitwise.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -94,10 +93,12 @@ private val AppTypography = Typography(
 )
 
 @Composable
-fun OfflineSplitwiseTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+fun OfflineSplitwiseTheme(
+    darkTheme: Boolean,
+    content: @Composable () -> Unit
+) {
     MaterialTheme(
-        colorScheme = if (dark) DarkColors else LightColors,
+        colorScheme = if (darkTheme) DarkColors else LightColors,
         typography = AppTypography,
         content = content
     )

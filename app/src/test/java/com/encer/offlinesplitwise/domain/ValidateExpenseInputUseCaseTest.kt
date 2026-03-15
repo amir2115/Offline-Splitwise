@@ -18,7 +18,7 @@ class ValidateExpenseInputUseCaseTest {
         )
 
         assertFalse(validation.isValid)
-        assertEquals("جمع سهم‌ها باید با مبلغ کل برابر باشد.", validation.message)
+        assertEquals(MessageKey.EXPENSE_SHARE_TOTAL_MISMATCH, validation.messageKey)
     }
 
     @Test
@@ -31,7 +31,7 @@ class ValidateExpenseInputUseCaseTest {
         )
 
         assertFalse(validation.isValid)
-        assertEquals("جمع پرداخت‌کننده‌ها باید با مبلغ کل برابر باشد.", validation.message)
+        assertEquals(MessageKey.EXPENSE_PAYER_TOTAL_MISMATCH, validation.messageKey)
     }
 
     @Test

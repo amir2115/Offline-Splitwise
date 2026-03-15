@@ -11,26 +11,26 @@ class ValidateExpenseInputUseCase {
         shares: List<ExpenseShare>
     ): ExpenseDraftValidation {
         if (totalAmount <= 0) {
-            return ExpenseDraftValidation(false, "مبلغ کل باید بیشتر از صفر باشد.")
+            return ExpenseDraftValidation(false, MessageKey.EXPENSE_TOTAL_POSITIVE)
         }
         if (payers.isEmpty()) {
-            return ExpenseDraftValidation(false, "حداقل یک پرداخت‌کننده لازم است.")
+            return ExpenseDraftValidation(false, MessageKey.EXPENSE_AT_LEAST_ONE_PAYER)
         }
         if (shares.isEmpty()) {
-            return ExpenseDraftValidation(false, "حداقل یک نفر باید در تقسیم حضور داشته باشد.")
+            return ExpenseDraftValidation(false, MessageKey.EXPENSE_AT_LEAST_ONE_SHARE)
         }
         if (payers.any { it.amount < 0 } || shares.any { it.amount < 0 }) {
-            return ExpenseDraftValidation(false, "مقادیر منفی مجاز نیستند.")
+            return ExpenseDraftValidation(false, MessageKey.EXPENSE_NEGATIVE_VALUES)
         }
         val paidTotal = payers.sumOf { it.amount }
         if (paidTotal != totalAmount) {
-            return ExpenseDraftValidation(false, "جمع پرداخت‌کننده‌ها باید با مبلغ کل برابر باشد.")
+            return ExpenseDraftValidation(false, MessageKey.EXPENSE_PAYER_TOTAL_MISMATCH)
         }
 
         return when (splitType) {
             SplitType.EXACT -> {
                 if (shares.sumOf { it.amount } != totalAmount) {
-                    ExpenseDraftValidation(false, "جمع سهم‌ها باید با مبلغ کل برابر باشد.")
+                    ExpenseDraftValidation(false, MessageKey.EXPENSE_SHARE_TOTAL_MISMATCH)
                 } else {
                     ExpenseDraftValidation(true, normalizedShares = shares)
                 }

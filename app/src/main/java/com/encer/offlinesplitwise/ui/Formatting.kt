@@ -9,20 +9,19 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private val persianLocale = Locale.forLanguageTag("fa")
-private val persianNumberFormatter = NumberFormat.getIntegerInstance(persianLocale)
-
 fun formatAmount(amount: Int): String {
-    val number = persianNumberFormatter.format(amount)
-    return "$number تومان"
+    val locale = Locale.getDefault()
+    val number = NumberFormat.getIntegerInstance(locale).format(amount)
+    val suffix = if (locale.language == "fa") "تومان" else "Toman"
+    return "$number $suffix"
 }
 
 fun formatAmountCompact(amount: Int): String {
-    return persianNumberFormatter.format(amount)
+    return NumberFormat.getIntegerInstance(Locale.getDefault()).format(amount)
 }
 
 fun formatDate(timestamp: Long): String {
-    val formatter = SimpleDateFormat("yyyy/MM/dd", persianLocale)
+    val formatter = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
     return formatter.format(Date(timestamp))
 }
 
@@ -63,7 +62,7 @@ class GroupedNumberVisualTransformation : VisualTransformation {
             return TransformedText(AnnotatedString(""), OffsetMapping.Identity)
         }
 
-        val grouped = persianNumberFormatter.format(digitsOnly.toLongOrNull() ?: 0L)
+        val grouped = NumberFormat.getIntegerInstance(Locale.getDefault()).format(digitsOnly.toLongOrNull() ?: 0L)
         val transformed = AnnotatedString(grouped)
 
         val mapping = object : OffsetMapping {

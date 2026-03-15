@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.PersonAddAlt
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -86,6 +87,7 @@ fun GroupsListScreen(
     appContainer: AppContainer,
     onOpenGroup: (Long) -> Unit
 ) {
+    val strings = appStrings()
     val viewModel: GroupsViewModel = viewModel(factory = groupsViewModelFactory(appContainer))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
@@ -95,10 +97,10 @@ fun GroupsListScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("خرج‌یار آفلاین") },
+                title = { Text(strings.appTitle) },
                 actions = {
                     IconButton(onClick = { showCreateDialog = true }) {
-                        Icon(Icons.Rounded.Add, contentDescription = "افزودن گروه")
+                        Icon(Icons.Rounded.Add, contentDescription = strings.addGroup)
                     }
                 }
             )
@@ -113,8 +115,8 @@ fun GroupsListScreen(
         ) {
             item {
                 HeroCard(
-                    title = "خرج‌ها را آفلاین جمع کن",
-                    subtitle = "برای هر سفر یا جمع، گروه بساز، اعضا را اضافه کن و بدهی‌ها را با حالت simplify ببین.",
+                    title = strings.homeHeroTitle,
+                    subtitle = strings.homeHeroSubtitle,
                     icon = { Icon(Icons.Rounded.Groups, contentDescription = null) }
                 )
             }
@@ -140,10 +142,10 @@ fun GroupsListScreen(
                                 Text(formatDate(group.createdAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             IconButton(onClick = { editingGroupId = group.id }) {
-                                Icon(Icons.Rounded.Edit, contentDescription = "ویرایش")
+                                Icon(Icons.Rounded.Edit, contentDescription = strings.edit)
                             }
                             IconButton(onClick = { viewModel.deleteGroup(group.id) }) {
-                                Icon(Icons.Rounded.DeleteOutline, contentDescription = "حذف", tint = MaterialTheme.colorScheme.error)
+                                Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -151,7 +153,7 @@ fun GroupsListScreen(
             }
             if (uiState.groups.isEmpty()) {
                 item {
-                    EmptyStateCard("هنوز گروهی نداری", "از دکمه بالا یک گروه جدید بساز.")
+                    EmptyStateCard(strings.noGroupsTitle, strings.noGroupsSubtitle)
                 }
             }
             item { Spacer(Modifier.height(24.dp)) }
@@ -160,10 +162,10 @@ fun GroupsListScreen(
 
     if (showCreateDialog) {
         NameDialog(
-            title = "گروه جدید",
+            title = strings.newGroupTitle,
             initialValue = "",
-            placeholder = "مثلا سفر شمال",
-            confirmLabel = "ساخت گروه",
+            placeholder = strings.groupPlaceholder,
+            confirmLabel = strings.createGroup,
             onDismiss = { showCreateDialog = false },
             onConfirm = {
                 viewModel.createGroup(it)
@@ -176,10 +178,10 @@ fun GroupsListScreen(
         val group = uiState.groups.firstOrNull { it.id == groupId }
         if (group != null) {
             NameDialog(
-                title = "ویرایش گروه",
+                title = strings.editGroupTitle,
                 initialValue = group.name,
-                placeholder = "نام گروه",
-                confirmLabel = "ذخیره",
+                placeholder = strings.groupPlaceholder,
+                confirmLabel = strings.save,
                 onDismiss = { editingGroupId = null },
                 onConfirm = { name ->
                     viewModel.updateGroup(group.copy(name = name))
@@ -203,6 +205,7 @@ fun GroupDashboardScreen(
     onOpenExpense: (Long) -> Unit,
     onEditSettlement: (Long) -> Unit,
 ) {
+    val strings = appStrings()
     val viewModel: GroupDashboardViewModel = viewModel(factory = groupDashboardFactory(groupId, appContainer))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -210,10 +213,10 @@ fun GroupDashboardScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text(uiState.group?.name ?: "گروه") },
+                title = { Text(uiState.group?.name ?: strings.groupFallbackTitle) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
                     }
                 }
             )
@@ -228,18 +231,18 @@ fun GroupDashboardScreen(
         ) {
             item {
                 HeroCard(
-                    title = "وضعیت کلی گروه",
-                    subtitle = "خرج‌ها، اعضا، تسویه‌ها و مانده‌های باز را از همین‌جا کنترل کن.",
+                    title = strings.groupOverviewTitle,
+                    subtitle = strings.groupOverviewSubtitle,
                     icon = { Icon(Icons.AutoMirrored.Rounded.ReceiptLong, contentDescription = null) }
                 )
             }
             item {
                 SummaryGrid(
                     items = listOf(
-                        "کل خرج" to formatAmount(uiState.summary.totalExpenses),
-                        "اعضا" to formatAmountCompact(uiState.summary.membersCount),
-                        "تسویه‌ها" to formatAmount(uiState.summary.totalSettlements),
-                        "مانده باز" to formatAmountCompact(uiState.summary.openBalancesCount)
+                        strings.totalExpenseLabel to formatAmount(uiState.summary.totalExpenses),
+                        strings.membersLabel to formatAmountCompact(uiState.summary.membersCount),
+                        strings.settlementsLabel to formatAmount(uiState.summary.totalSettlements),
+                        strings.openBalancesLabel to formatAmountCompact(uiState.summary.openBalancesCount)
                     )
                 )
             }
@@ -248,14 +251,14 @@ fun GroupDashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    ActionChip("اعضا", Icons.Rounded.PersonAddAlt, onOpenMembers)
-                    ActionChip("خرج جدید", Icons.Rounded.Add, onAddExpense)
-                    ActionChip("ثبت تسویه", Icons.Rounded.Payments, onAddSettlement)
-                    ActionChip("مانده‌ها", Icons.Rounded.SwapHoriz, onOpenBalances)
+                    ActionChip(strings.membersAction, Icons.Rounded.PersonAddAlt, onOpenMembers)
+                    ActionChip(strings.newExpenseAction, Icons.Rounded.Add, onAddExpense)
+                    ActionChip(strings.addSettlementAction, Icons.Rounded.Payments, onAddSettlement)
+                    ActionChip(strings.balancesAction, Icons.Rounded.SwapHoriz, onOpenBalances)
                 }
             }
             item {
-                SectionHeader("آخرین خرج‌ها")
+                SectionHeader(strings.recentExpensesTitle)
             }
             items(uiState.expenses.take(8), key = { it.id }) { expense ->
                 ExpenseCard(
@@ -266,11 +269,11 @@ fun GroupDashboardScreen(
             }
             if (uiState.expenses.isEmpty()) {
                 item {
-                    EmptyStateCard("خرجی ثبت نشده", "اولین خرج گروه را ثبت کن تا مانده‌ها محاسبه شوند.")
+                    EmptyStateCard(strings.noExpensesTitle, strings.noExpensesSubtitle)
                 }
             }
             item {
-                SectionHeader("تسویه‌های اخیر")
+                SectionHeader(strings.recentSettlementsTitle)
             }
             items(uiState.settlements.take(8), key = { it.id }) { settlement ->
                 SettlementCard(
@@ -282,7 +285,7 @@ fun GroupDashboardScreen(
             }
             if (uiState.settlements.isEmpty()) {
                 item {
-                    EmptyStateCard("تسویه‌ای ثبت نشده", "وقتی کسی بدهی‌اش را داد، از اینجا ثبتش کن.")
+                    EmptyStateCard(strings.noSettlementsTitle, strings.noSettlementsSubtitle)
                 }
             }
             item { Spacer(Modifier.height(24.dp)) }
@@ -296,6 +299,7 @@ fun MembersScreen(
     groupId: Long,
     onBack: () -> Unit
 ) {
+    val strings = appStrings()
     val viewModel: MembersViewModel = viewModel(factory = membersViewModelFactory(groupId, appContainer))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDialog by rememberSaveable { mutableStateOf(false) }
@@ -305,15 +309,15 @@ fun MembersScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("اعضای ${uiState.group?.name.orEmpty()}") },
+                title = { Text(strings.membersOfGroup(uiState.group?.name.orEmpty())) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
                     }
                 },
                 actions = {
                     IconButton(onClick = { showDialog = true }) {
-                        Icon(Icons.Rounded.PersonAddAlt, contentDescription = "افزودن عضو")
+                        Icon(Icons.Rounded.PersonAddAlt, contentDescription = strings.addMember)
                     }
                 }
             )
@@ -344,29 +348,29 @@ fun MembersScreen(
                         Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(member.name, style = MaterialTheme.typography.titleMedium)
-                            Text("عضو از ${formatDate(member.createdAt)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(strings.memberSince(formatDate(member.createdAt)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         IconButton(onClick = { editingMemberId = member.id }) {
-                            Icon(Icons.Rounded.Edit, contentDescription = "ویرایش")
+                            Icon(Icons.Rounded.Edit, contentDescription = strings.edit)
                         }
                         IconButton(onClick = { viewModel.deleteMember(member.id) }) {
-                            Icon(Icons.Rounded.DeleteOutline, contentDescription = "حذف", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
             }
             if (uiState.members.isEmpty()) {
-                item { EmptyStateCard("هیچ عضوی ثبت نشده", "برای ثبت خرج حداقل یک عضو نیاز داری.") }
+                item { EmptyStateCard(strings.noMembersTitle, strings.noMembersSubtitle) }
             }
         }
     }
 
     if (showDialog) {
         NameDialog(
-            title = "افزودن عضو",
+            title = strings.addMember,
             initialValue = "",
-            placeholder = "نام عضو",
-            confirmLabel = "ثبت عضو",
+            placeholder = strings.memberPlaceholder,
+            confirmLabel = strings.saveMember,
             onDismiss = { showDialog = false },
             onConfirm = {
                 viewModel.addMember(it)
@@ -378,10 +382,10 @@ fun MembersScreen(
     editingMemberId?.let { memberId ->
         uiState.members.firstOrNull { it.id == memberId }?.let { member ->
             NameDialog(
-                title = "ویرایش عضو",
+                title = strings.editMember,
                 initialValue = member.name,
-                placeholder = "نام عضو",
-                confirmLabel = "ذخیره",
+                placeholder = strings.memberPlaceholder,
+                confirmLabel = strings.save,
                 onDismiss = { editingMemberId = null },
                 onConfirm = { name ->
                     viewModel.updateMember(member.copy(name = name))
@@ -401,13 +405,14 @@ fun AddEditExpenseScreen(
     onBack: () -> Unit,
     onSaved: () -> Unit,
 ) {
+    val strings = appStrings()
     val viewModel: ExpenseEditorViewModel = viewModel(factory = expenseEditorFactory(groupId, expenseId, appContainer))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.message) {
         uiState.message?.let {
-            snackbarHostState.showSnackbar(it)
+            snackbarHostState.showSnackbar(strings.message(it).orEmpty())
             viewModel.clearMessage()
         }
     }
@@ -423,16 +428,16 @@ fun AddEditExpenseScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(if (expenseId == null) "خرج جدید" else "ویرایش خرج") },
+                title = { Text(strings.expenseFormTitle(expenseId != null)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
                     }
                 },
                 actions = {
                     if (expenseId != null) {
                         IconButton(onClick = { viewModel.delete() }) {
-                            Icon(Icons.Rounded.DeleteOutline, contentDescription = "حذف", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -448,29 +453,29 @@ fun AddEditExpenseScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             HeroCard(
-                title = "خرج را دقیق ثبت کن",
-                subtitle = "می‌توانی مشخص کنی چه کسی پرداخت کرده و سهم هر نفر چقدر بوده.",
+                title = strings.expenseHeroTitle,
+                subtitle = strings.expenseHeroSubtitle,
                 icon = { Icon(Icons.AutoMirrored.Rounded.ReceiptLong, contentDescription = null) }
             )
             OutlinedTextField(
                 value = uiState.title,
                 onValueChange = viewModel::updateTitle,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("عنوان خرج") },
+                label = { Text(strings.expenseTitleLabel) },
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
                 value = uiState.note,
                 onValueChange = viewModel::updateNote,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("توضیح") },
+                label = { Text(strings.expenseNoteLabel) },
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
                 value = uiState.totalAmountInput,
                 onValueChange = viewModel::updateTotal,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("مبلغ کل (تومان)") },
+                label = { Text(strings.totalAmountLabel) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 visualTransformation = amountVisualTransformation,
                 shape = RoundedCornerShape(20.dp)
@@ -479,15 +484,15 @@ fun AddEditExpenseScreen(
                 FilterChip(
                     selected = uiState.splitType == SplitType.EQUAL,
                     onClick = { viewModel.updateSplitType(SplitType.EQUAL) },
-                    label = { Text("تقسیم مساوی") }
+                    label = { Text(strings.equalSplitLabel) }
                 )
                 FilterChip(
                     selected = uiState.splitType == SplitType.EXACT,
                     onClick = { viewModel.updateSplitType(SplitType.EXACT) },
-                    label = { Text("مبلغ دقیق") }
+                    label = { Text(strings.exactSplitLabel) }
                 )
             }
-            SectionHeader("اعضا و پرداخت‌کننده‌ها")
+            SectionHeader(strings.membersAndPayersTitle)
             uiState.members.forEach { member ->
                 MemberEditorCard(
                     member = member,
@@ -503,7 +508,7 @@ fun AddEditExpenseScreen(
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(22.dp)
             ) {
-                Text(if (expenseId == null) "ثبت خرج" else "ذخیره تغییرات")
+                Text(strings.expenseFormAction(expenseId != null))
             }
         }
     }
@@ -535,13 +540,14 @@ fun AddSettlementScreen(
     onBack: () -> Unit,
     onSaved: () -> Unit,
 ) {
+    val strings = appStrings()
     val viewModel: SettlementEditorViewModel = viewModel(factory = settlementEditorFactory(groupId, settlementId, appContainer))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.message) {
         uiState.message?.let {
-            snackbarHostState.showSnackbar(it)
+            snackbarHostState.showSnackbar(strings.message(it).orEmpty())
             viewModel.clearMessage()
         }
     }
@@ -554,16 +560,16 @@ fun AddSettlementScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(if (settlementId == null) "ثبت تسویه" else "ویرایش تسویه") },
+                title = { Text(strings.settlementFormTitle(settlementId != null)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
                     }
                 },
                 actions = {
                     if (settlementId != null) {
                         IconButton(onClick = { viewModel.delete() }) {
-                            Icon(Icons.Rounded.DeleteOutline, contentDescription = "حذف", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -579,18 +585,18 @@ fun AddSettlementScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             HeroCard(
-                title = "تسویه واقعی را ثبت کن",
-                subtitle = "وقتی یکی بدهی‌اش را به دیگری پرداخت کرد، اینجا ثبتش کن تا مانده‌ها اصلاح شوند.",
+                title = strings.settlementHeroTitle,
+                subtitle = strings.settlementHeroSubtitle,
                 icon = { Icon(Icons.Rounded.Payments, contentDescription = null) }
             )
             SimpleMemberPicker(
-                label = "پرداخت‌کننده",
+                label = strings.payerLabel,
                 members = uiState.members,
                 selectedId = uiState.fromMemberId,
                 onSelect = viewModel::setFromMember
             )
             SimpleMemberPicker(
-                label = "دریافت‌کننده",
+                label = strings.receiverLabel,
                 members = uiState.members,
                 selectedId = uiState.toMemberId,
                 onSelect = viewModel::setToMember
@@ -599,7 +605,7 @@ fun AddSettlementScreen(
                 value = uiState.amountInput,
                 onValueChange = viewModel::setAmount,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("مبلغ تسویه") },
+                label = { Text(strings.settlementAmountLabel) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 visualTransformation = amountVisualTransformation,
                 shape = RoundedCornerShape(20.dp)
@@ -608,7 +614,7 @@ fun AddSettlementScreen(
                 value = uiState.note,
                 onValueChange = viewModel::setNote,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("یادداشت") },
+                label = { Text(strings.noteLabel) },
                 shape = RoundedCornerShape(20.dp)
             )
             Button(
@@ -616,7 +622,7 @@ fun AddSettlementScreen(
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(22.dp)
             ) {
-                Text(if (settlementId == null) "ثبت تسویه" else "ذخیره تغییرات")
+                Text(strings.settlementFormAction(settlementId != null))
             }
         }
     }
@@ -629,6 +635,7 @@ fun BalancesScreen(
     groupId: Long,
     onBack: () -> Unit
 ) {
+    val strings = appStrings()
     val viewModel: BalancesViewModel = viewModel(factory = balancesFactory(groupId, appContainer))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var simplify by rememberSaveable { mutableStateOf(true) }
@@ -637,10 +644,10 @@ fun BalancesScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("مانده‌های ${uiState.group?.name.orEmpty()}") },
+                title = { Text(strings.balancesOfGroup(uiState.group?.name.orEmpty())) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
                     }
                 }
             )
@@ -663,24 +670,24 @@ fun BalancesScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("حالت پرداخت بهینه", style = MaterialTheme.typography.titleMedium)
-                            Text("کمترین تعداد پرداخت پیشنهادی را نشان می‌دهد.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(strings.optimizePaymentsTitle, style = MaterialTheme.typography.titleMedium)
+                            Text(strings.optimizePaymentsSubtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Switch(checked = simplify, onCheckedChange = { simplify = it })
                     }
                 }
             }
-            item { SectionHeader("مانده هر نفر") }
+            item { SectionHeader(strings.memberBalanceTitle) }
             items(uiState.balances, key = { it.memberId }) { balance ->
                 BalanceCard(balance)
             }
             if (simplify) {
-                item { SectionHeader("پرداخت‌های پیشنهادی") }
+                item { SectionHeader(strings.suggestedPaymentsTitle) }
                 items(uiState.simplifiedTransfers, key = { "${it.fromMemberId}-${it.toMemberId}" }) { transfer ->
                     SimplifiedTransferCard(transfer)
                 }
                 if (uiState.simplifiedTransfers.isEmpty()) {
-                    item { EmptyStateCard("همه‌چیز تسویه است", "در این گروه پرداخت باز باقی نمانده.") }
+                    item { EmptyStateCard(strings.allSettledTitle, strings.allSettledSubtitle) }
                 }
             }
         }
@@ -695,6 +702,7 @@ fun ExpenseDetailScreen(
     onBack: () -> Unit,
     onEdit: (Long, Long) -> Unit
 ) {
+    val strings = appStrings()
     val dashboardViewModel: GroupDashboardViewModel = viewModel(factory = groupDashboardFactory(groupId, appContainer))
     val uiState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
     val expense = uiState.expenses.firstOrNull { it.id == expenseId }
@@ -703,22 +711,22 @@ fun ExpenseDetailScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text(expense?.title ?: "جزئیات خرج") },
+                title = { Text(expense?.title ?: strings.expenseDetailsFallback) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
                     }
                 },
                 actions = {
                     if (expense != null) {
                         IconButton(onClick = { onEdit(groupId, expenseId) }) {
-                            Icon(Icons.Rounded.Edit, contentDescription = "ویرایش")
+                            Icon(Icons.Rounded.Edit, contentDescription = strings.edit)
                         }
                         IconButton(onClick = {
                             dashboardViewModel.deleteExpense(expenseId)
                             onBack()
                         }) {
-                            Icon(Icons.Rounded.DeleteOutline, contentDescription = "حذف", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -727,7 +735,7 @@ fun ExpenseDetailScreen(
     ) { padding ->
         if (expense == null) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("خرج پیدا نشد.")
+                Text(strings.expenseNotFound)
             }
         } else {
             Column(
@@ -740,25 +748,25 @@ fun ExpenseDetailScreen(
             ) {
                 HeroCard(
                     title = expense.title,
-                    subtitle = expense.note.ifBlank { "بدون توضیح" },
+                    subtitle = expense.note.ifBlank { strings.noDescription },
                     icon = { Icon(Icons.AutoMirrored.Rounded.ReceiptLong, contentDescription = null) }
                 )
                 SummaryGrid(
                     items = listOf(
-                        "مبلغ کل" to formatAmount(expense.totalAmount),
-                        "روش تقسیم" to if (expense.splitType == SplitType.EQUAL) "مساوی" else "دقیق",
-                        "تاریخ" to formatDate(expense.createdAt),
-                        "تعداد افراد" to formatAmountCompact(expense.shares.size)
+                        strings.totalAmountStat to formatAmount(expense.totalAmount),
+                        strings.splitMethodStat to strings.splitTypeLabel(expense.splitType == SplitType.EQUAL),
+                        strings.dateStat to formatDate(expense.createdAt),
+                        strings.peopleCountStat to formatAmountCompact(expense.shares.size)
                     )
                 )
-                SectionHeader("پرداخت‌کننده‌ها")
+                SectionHeader(strings.payersTitle)
                 expense.payers.forEach { payer ->
                     DetailLine(
                         label = memberName(uiState.members, payer.memberId),
                         value = formatAmount(payer.amount)
                     )
                 }
-                SectionHeader("سهم افراد")
+                SectionHeader(strings.sharesTitle)
                 expense.shares.forEach { share ->
                     DetailLine(
                         label = memberName(uiState.members, share.memberId),
@@ -779,6 +787,7 @@ private fun MemberEditorCard(
     onPayerChange: (String) -> Unit,
     onExactShareChange: (String) -> Unit,
 ) {
+    val strings = appStrings()
     ElevatedCard(shape = RoundedCornerShape(24.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -789,7 +798,7 @@ private fun MemberEditorCard(
                 value = member.payerAmountInput,
                 onValueChange = onPayerChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("چقدر پرداخت کرده؟") },
+                label = { Text(strings.paidHowMuchLabel) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 visualTransformation = amountVisualTransformation,
                 shape = RoundedCornerShape(18.dp)
@@ -800,13 +809,13 @@ private fun MemberEditorCard(
                         value = member.exactShareInput,
                         onValueChange = onExactShareChange,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("سهم این نفر") },
+                        label = { Text(strings.shareAmountLabel) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         visualTransformation = amountVisualTransformation,
                         shape = RoundedCornerShape(18.dp)
                     )
                 } else {
-                    DetailLine(label = "سهم مساوی", value = equalSharePreview)
+                    DetailLine(label = strings.equalShareLabel, value = equalSharePreview)
                 }
             }
         }
@@ -815,6 +824,7 @@ private fun MemberEditorCard(
 
 @Composable
 private fun BalanceCard(balance: MemberBalance) {
+    val strings = appStrings()
     val tone = when {
         balance.netBalance > 0 -> Color(0xFF0F766E)
         balance.netBalance < 0 -> Color(0xFFB45309)
@@ -825,20 +835,16 @@ private fun BalanceCard(balance: MemberBalance) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(balance.memberName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Text(
-                    text = when {
-                        balance.netBalance > 0 -> "طلبکار"
-                        balance.netBalance < 0 -> "بدهکار"
-                        else -> "تسویه"
-                    },
+                    text = strings.balanceState(balance.netBalance),
                     color = tone,
                     fontWeight = FontWeight.Bold
                 )
             }
             SummaryGrid(
                 items = listOf(
-                    "پرداخت" to formatAmount(balance.paidTotal),
-                    "سهم" to formatAmount(balance.owedTotal),
-                    "خالص" to formatAmount(kotlin.math.abs(balance.netBalance))
+                    strings.paidStat to formatAmount(balance.paidTotal),
+                    strings.owedStat to formatAmount(balance.owedTotal),
+                    strings.netStat to formatAmount(kotlin.math.abs(balance.netBalance))
                 )
             )
         }
@@ -847,9 +853,10 @@ private fun BalanceCard(balance: MemberBalance) {
 
 @Composable
 private fun SimplifiedTransferCard(transfer: SimplifiedTransfer) {
+    val strings = appStrings()
     ElevatedCard(shape = RoundedCornerShape(24.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
         Column(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("${transfer.fromMemberName} باید به ${transfer.toMemberName} پرداخت کند", style = MaterialTheme.typography.titleMedium)
+            Text(strings.paymentSuggestion(transfer.fromMemberName, transfer.toMemberName), style = MaterialTheme.typography.titleMedium)
             Text(formatAmount(transfer.amount), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
         }
     }
@@ -857,6 +864,7 @@ private fun SimplifiedTransferCard(transfer: SimplifiedTransfer) {
 
 @Composable
 private fun ExpenseCard(expense: Expense, members: List<Member>, onClick: () -> Unit) {
+    val strings = appStrings()
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -868,8 +876,8 @@ private fun ExpenseCard(expense: Expense, members: List<Member>, onClick: () -> 
                 Text(expense.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Text(formatAmount(expense.totalAmount), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
-            Text(expense.note.ifBlank { "بدون توضیح" }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            AssistChip(onClick = {}, label = { Text("پرداخت‌کننده‌ها: ${expense.payers.joinToString("، ") { memberName(members, it.memberId) }}") })
+            Text(expense.note.ifBlank { strings.noDescription }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            AssistChip(onClick = {}, label = { Text(strings.payersSummary(expense.payers.joinToString(if (LocalAppLanguage.current == com.encer.offlinesplitwise.data.preferences.AppLanguage.FA) "، " else ", ") { memberName(members, it.memberId) })) })
         }
     }
 }
@@ -881,17 +889,18 @@ private fun SettlementCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val strings = appStrings()
     ElevatedCard(shape = RoundedCornerShape(24.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("${memberName(members, settlement.fromMemberId)} به ${memberName(members, settlement.toMemberId)}", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Text(strings.settlementSummary(memberName(members, settlement.fromMemberId), memberName(members, settlement.toMemberId)), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Text(formatAmount(settlement.amount), color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
             }
-            Text(settlement.note.ifBlank { "بدون توضیح" }, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+            Text(settlement.note.ifBlank { strings.noDescription }, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onEdit) { Text("ویرایش") }
+                OutlinedButton(onClick = onEdit) { Text(strings.edit) }
                 OutlinedButton(onClick = onDelete, border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)) {
-                    Text("حذف", color = MaterialTheme.colorScheme.error)
+                    Text(strings.delete, color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -998,6 +1007,7 @@ private fun SimpleMemberPicker(
     selectedId: Long?,
     onSelect: (Long) -> Unit
 ) {
+    val strings = appStrings()
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(label, style = MaterialTheme.typography.titleMedium)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1021,6 +1031,7 @@ private fun NameDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
+    val strings = appStrings()
     var value by rememberSaveable(initialValue) { mutableStateOf(initialValue) }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1031,7 +1042,7 @@ private fun NameDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("انصراف")
+                Text(strings.cancel)
             }
         },
         title = { Text(title) },
@@ -1047,6 +1058,64 @@ private fun NameDialog(
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun SettingsScreen(
+    currentLanguage: com.encer.offlinesplitwise.data.preferences.AppLanguage,
+    currentTheme: com.encer.offlinesplitwise.data.preferences.AppThemeMode,
+    onLanguageSelected: (com.encer.offlinesplitwise.data.preferences.AppLanguage) -> Unit,
+    onThemeSelected: (com.encer.offlinesplitwise.data.preferences.AppThemeMode) -> Unit,
+) {
+    val strings = appStrings()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        HeroCard(
+            title = strings.settingsHeroTitle,
+            subtitle = strings.settingsHeroSubtitle,
+            icon = { Icon(Icons.Rounded.Settings, contentDescription = null) }
+        )
+        ElevatedCard(shape = RoundedCornerShape(28.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(strings.languageTitle, style = MaterialTheme.typography.titleLarge)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FilterChip(
+                        selected = currentLanguage == com.encer.offlinesplitwise.data.preferences.AppLanguage.FA,
+                        onClick = { onLanguageSelected(com.encer.offlinesplitwise.data.preferences.AppLanguage.FA) },
+                        label = { Text(strings.persianLabel) }
+                    )
+                    FilterChip(
+                        selected = currentLanguage == com.encer.offlinesplitwise.data.preferences.AppLanguage.EN,
+                        onClick = { onLanguageSelected(com.encer.offlinesplitwise.data.preferences.AppLanguage.EN) },
+                        label = { Text(strings.englishLabel) }
+                    )
+                }
+            }
+        }
+        ElevatedCard(shape = RoundedCornerShape(28.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(strings.themeTitle, style = MaterialTheme.typography.titleLarge)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FilterChip(
+                        selected = currentTheme == com.encer.offlinesplitwise.data.preferences.AppThemeMode.LIGHT,
+                        onClick = { onThemeSelected(com.encer.offlinesplitwise.data.preferences.AppThemeMode.LIGHT) },
+                        label = { Text(strings.lightLabel) }
+                    )
+                    FilterChip(
+                        selected = currentTheme == com.encer.offlinesplitwise.data.preferences.AppThemeMode.DARK,
+                        onClick = { onThemeSelected(com.encer.offlinesplitwise.data.preferences.AppThemeMode.DARK) },
+                        label = { Text(strings.darkLabel) }
+                    )
+                }
+            }
+        }
+    }
+}
+
 private fun memberName(members: List<Member>, memberId: Long): String {
-    return members.firstOrNull { it.id == memberId }?.name ?: "کاربر $memberId"
+    return members.firstOrNull { it.id == memberId }?.name ?: if (java.util.Locale.getDefault().language == "fa") "کاربر $memberId" else "Member $memberId"
 }

@@ -11,6 +11,7 @@ import com.encer.offlinesplitwise.domain.ExpenseDraft
 import com.encer.offlinesplitwise.domain.ExpenseShare
 import com.encer.offlinesplitwise.domain.Group
 import com.encer.offlinesplitwise.domain.GroupSummary
+import com.encer.offlinesplitwise.domain.MessageKey
 import com.encer.offlinesplitwise.domain.Member
 import com.encer.offlinesplitwise.domain.MemberBalance
 import com.encer.offlinesplitwise.domain.Settlement
@@ -144,7 +145,7 @@ data class ExpenseEditorUiState(
     val totalAmountInput: String = "",
     val splitType: SplitType = SplitType.EQUAL,
     val members: List<MemberDraftUi> = emptyList(),
-    val message: String? = null,
+    val message: MessageKey? = null,
     val savedExpenseId: Long? = null,
     val loaded: Boolean = false,
 )
@@ -269,11 +270,11 @@ class ExpenseEditorViewModel(
             shares = rawShares
         )
         if (state.title.trim().isEmpty()) {
-            _uiState.update { it.copy(message = "عنوان خرج را وارد کنید.") }
+            _uiState.update { it.copy(message = MessageKey.EXPENSE_TITLE_REQUIRED) }
             return
         }
         if (!validation.isValid) {
-            _uiState.update { it.copy(message = validation.message) }
+            _uiState.update { it.copy(message = validation.messageKey) }
             return
         }
 
@@ -290,7 +291,7 @@ class ExpenseEditorViewModel(
                 ),
                 existingId = expenseId
             )
-            _uiState.update { it.copy(savedExpenseId = newId, message = "خرج ذخیره شد.") }
+            _uiState.update { it.copy(savedExpenseId = newId, message = MessageKey.EXPENSE_SAVED) }
         }
     }
 
@@ -310,7 +311,7 @@ data class SettlementEditorUiState(
     val toMemberId: Long? = null,
     val amountInput: String = "",
     val note: String = "",
-    val message: String? = null,
+    val message: MessageKey? = null,
     val saved: Boolean = false,
 )
 
@@ -363,9 +364,9 @@ class SettlementEditorViewModel(
         val fromMemberId = state.fromMemberId
         val toMemberId = state.toMemberId
         when {
-            fromMemberId == null || toMemberId == null -> _uiState.update { it.copy(message = "دو نفر را انتخاب کنید.") }
-            fromMemberId == toMemberId -> _uiState.update { it.copy(message = "پرداخت‌کننده و دریافت‌کننده باید متفاوت باشند.") }
-            amount <= 0 -> _uiState.update { it.copy(message = "مبلغ تسویه باید بیشتر از صفر باشد.") }
+            fromMemberId == null || toMemberId == null -> _uiState.update { it.copy(message = MessageKey.SETTLEMENT_SELECT_TWO_MEMBERS) }
+            fromMemberId == toMemberId -> _uiState.update { it.copy(message = MessageKey.SETTLEMENT_MEMBERS_MUST_DIFFER) }
+            amount <= 0 -> _uiState.update { it.copy(message = MessageKey.SETTLEMENT_AMOUNT_POSITIVE) }
             else -> {
                 viewModelScope.launch {
                     appContainer.settlementRepository.upsertSettlement(
@@ -379,7 +380,7 @@ class SettlementEditorViewModel(
                             createdAt = existingCreatedAt ?: System.currentTimeMillis()
                         )
                     )
-                    _uiState.update { it.copy(saved = true, message = "تسویه ذخیره شد.") }
+                    _uiState.update { it.copy(saved = true, message = MessageKey.SETTLEMENT_SAVED) }
                 }
             }
         }

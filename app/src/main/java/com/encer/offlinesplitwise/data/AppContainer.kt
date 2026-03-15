@@ -2,6 +2,7 @@ package com.encer.offlinesplitwise.data
 
 import android.content.Context
 import com.encer.offlinesplitwise.data.local.OfflineSplitwiseDatabase
+import com.encer.offlinesplitwise.data.preferences.SettingsRepository
 import com.encer.offlinesplitwise.data.repository.DefaultExpenseRepository
 import com.encer.offlinesplitwise.data.repository.DefaultGroupRepository
 import com.encer.offlinesplitwise.data.repository.DefaultMemberRepository
@@ -18,6 +19,7 @@ import com.encer.offlinesplitwise.domain.ValidateExpenseInputUseCase
 
 class AppContainer(context: Context) {
     private val database = OfflineSplitwiseDatabase.create(context)
+    val settingsRepository = SettingsRepository(context)
 
     val groupRepository: GroupRepository = DefaultGroupRepository(database.groupDao())
     val memberRepository: MemberRepository = DefaultMemberRepository(database.memberDao())

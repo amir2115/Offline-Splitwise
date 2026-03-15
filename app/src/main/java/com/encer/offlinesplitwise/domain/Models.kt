@@ -7,6 +7,21 @@ enum class SplitType {
     EXACT
 }
 
+enum class MessageKey {
+    EXPENSE_TOTAL_POSITIVE,
+    EXPENSE_AT_LEAST_ONE_PAYER,
+    EXPENSE_AT_LEAST_ONE_SHARE,
+    EXPENSE_NEGATIVE_VALUES,
+    EXPENSE_PAYER_TOTAL_MISMATCH,
+    EXPENSE_SHARE_TOTAL_MISMATCH,
+    EXPENSE_TITLE_REQUIRED,
+    EXPENSE_SAVED,
+    SETTLEMENT_SELECT_TWO_MEMBERS,
+    SETTLEMENT_MEMBERS_MUST_DIFFER,
+    SETTLEMENT_AMOUNT_POSITIVE,
+    SETTLEMENT_SAVED,
+}
+
 data class Group(
     val id: Long = 0,
     val name: String,
@@ -84,7 +99,7 @@ data class GroupSummary(
 
 data class ExpenseDraftValidation(
     val isValid: Boolean,
-    val message: String? = null,
+    val messageKey: MessageKey? = null,
     val normalizedShares: List<ExpenseShare> = emptyList(),
 )
 
