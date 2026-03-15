@@ -19,22 +19,34 @@ private val LightColors = lightColorScheme(
     secondary = Color(0xFF1D4ED8),
     onSecondary = Color(0xFFFFFFFF),
     tertiary = Color(0xFFB45309),
+    onTertiary = Color(0xFFFFFFFF),
     background = Color(0xFFF7F7F2),
     onBackground = Color(0xFF122023),
     surface = Color(0xFFFFFCF5),
     onSurface = Color(0xFF122023),
     surfaceVariant = Color(0xFFE3E8DD),
     onSurfaceVariant = Color(0xFF415458),
-    error = Color(0xFFB91C1C)
+    outline = Color(0xFF8B9494),
+    error = Color(0xFFB91C1C),
+    onError = Color(0xFFFFFFFF)
 )
 
 private val DarkColors = darkColorScheme(
     primary = Color(0xFF5EEAD4),
+    onPrimary = Color(0xFF072F2D),
     secondary = Color(0xFF93C5FD),
+    onSecondary = Color(0xFF0B2A4B),
+    tertiary = Color(0xFFF9C46B),
+    onTertiary = Color(0xFF4C3310),
     background = Color(0xFF101B1D),
+    onBackground = Color(0xFFF1F6F4),
     surface = Color(0xFF172427),
     onSurface = Color(0xFFF6F8F3),
-    onSurfaceVariant = Color(0xFFB3C6C8)
+    surfaceVariant = Color(0xFF334045),
+    onSurfaceVariant = Color(0xFFC2CFD0),
+    outline = Color(0xFF8A989A),
+    error = Color(0xFFFF8A80),
+    onError = Color(0xFF5C1410)
 )
 
 private val IranYekan = FontFamily(

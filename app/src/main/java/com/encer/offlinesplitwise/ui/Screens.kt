@@ -47,6 +47,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -54,6 +55,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -81,6 +83,33 @@ import com.encer.offlinesplitwise.domain.SplitType
 
 private val amountVisualTransformation = GroupedNumberVisualTransformation()
 
+@Composable
+private fun appTopBarColors() = TopAppBarDefaults.topAppBarColors(
+    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+    titleContentColor = MaterialTheme.colorScheme.onSurface,
+    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+    actionIconContentColor = MaterialTheme.colorScheme.primary
+)
+
+@Composable
+private fun appCardColors() = CardDefaults.elevatedCardColors(
+    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+    contentColor = MaterialTheme.colorScheme.onSurface
+)
+
+@Composable
+private fun appFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.12f),
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.06f),
+    cursorColor = MaterialTheme.colorScheme.primary,
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun GroupsListScreen(
@@ -98,6 +127,7 @@ fun GroupsListScreen(
         topBar = {
             TopAppBar(
                 title = { Text(strings.appTitle) },
+                colors = appTopBarColors(),
                 actions = {
                     IconButton(onClick = { showCreateDialog = true }) {
                         Icon(Icons.Rounded.Add, contentDescription = strings.addGroup)
@@ -124,7 +154,7 @@ fun GroupsListScreen(
                 ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(28.dp),
-                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    colors = appCardColors(),
                     onClick = { onOpenGroup(group.id) }
                 ) {
                     Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -214,6 +244,7 @@ fun GroupDashboardScreen(
         topBar = {
             TopAppBar(
                 title = { Text(uiState.group?.name ?: strings.groupFallbackTitle) },
+                colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
@@ -226,7 +257,7 @@ fun GroupDashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -310,6 +341,7 @@ fun MembersScreen(
         topBar = {
             TopAppBar(
                 title = { Text(strings.membersOfGroup(uiState.group?.name.orEmpty())) },
+                colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
@@ -327,11 +359,11 @@ fun MembersScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(uiState.members, key = { it.id }) { member ->
-                ElevatedCard(shape = RoundedCornerShape(24.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
+                ElevatedCard(shape = RoundedCornerShape(24.dp), colors = appCardColors()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -429,6 +461,7 @@ fun AddEditExpenseScreen(
         topBar = {
             TopAppBar(
                 title = { Text(strings.expenseFormTitle(expenseId != null)) },
+                colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
@@ -462,6 +495,7 @@ fun AddEditExpenseScreen(
                 onValueChange = viewModel::updateTitle,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(strings.expenseTitleLabel) },
+                colors = appFieldColors(),
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
@@ -469,6 +503,7 @@ fun AddEditExpenseScreen(
                 onValueChange = viewModel::updateNote,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(strings.expenseNoteLabel) },
+                colors = appFieldColors(),
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
@@ -478,6 +513,7 @@ fun AddEditExpenseScreen(
                 label = { Text(strings.totalAmountLabel) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 visualTransformation = amountVisualTransformation,
+                colors = appFieldColors(),
                 shape = RoundedCornerShape(20.dp)
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -561,6 +597,7 @@ fun AddSettlementScreen(
         topBar = {
             TopAppBar(
                 title = { Text(strings.settlementFormTitle(settlementId != null)) },
+                colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
@@ -608,6 +645,7 @@ fun AddSettlementScreen(
                 label = { Text(strings.settlementAmountLabel) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 visualTransformation = amountVisualTransformation,
+                colors = appFieldColors(),
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
@@ -615,6 +653,7 @@ fun AddSettlementScreen(
                 onValueChange = viewModel::setNote,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(strings.noteLabel) },
+                colors = appFieldColors(),
                 shape = RoundedCornerShape(20.dp)
             )
             Button(
@@ -645,6 +684,7 @@ fun BalancesScreen(
         topBar = {
             TopAppBar(
                 title = { Text(strings.balancesOfGroup(uiState.group?.name.orEmpty())) },
+                colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
@@ -661,7 +701,7 @@ fun BalancesScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
-                ElevatedCard(shape = RoundedCornerShape(28.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
+                ElevatedCard(shape = RoundedCornerShape(28.dp), colors = appCardColors()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -712,6 +752,7 @@ fun ExpenseDetailScreen(
         topBar = {
             TopAppBar(
                 title = { Text(expense?.title ?: strings.expenseDetailsFallback) },
+                colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
@@ -788,7 +829,7 @@ private fun MemberEditorCard(
     onExactShareChange: (String) -> Unit,
 ) {
     val strings = appStrings()
-    ElevatedCard(shape = RoundedCornerShape(24.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
+    ElevatedCard(shape = RoundedCornerShape(24.dp), colors = appCardColors()) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(member.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
@@ -801,6 +842,7 @@ private fun MemberEditorCard(
                 label = { Text(strings.paidHowMuchLabel) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 visualTransformation = amountVisualTransformation,
+                colors = appFieldColors(),
                 shape = RoundedCornerShape(18.dp)
             )
             if (member.includedInSplit) {
@@ -812,6 +854,7 @@ private fun MemberEditorCard(
                         label = { Text(strings.shareAmountLabel) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         visualTransformation = amountVisualTransformation,
+                        colors = appFieldColors(),
                         shape = RoundedCornerShape(18.dp)
                     )
                 } else {
@@ -830,7 +873,7 @@ private fun BalanceCard(balance: MemberBalance) {
         balance.netBalance < 0 -> Color(0xFFB45309)
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-    ElevatedCard(shape = RoundedCornerShape(24.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
+    ElevatedCard(shape = RoundedCornerShape(24.dp), colors = appCardColors()) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(balance.memberName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
@@ -854,7 +897,7 @@ private fun BalanceCard(balance: MemberBalance) {
 @Composable
 private fun SimplifiedTransferCard(transfer: SimplifiedTransfer) {
     val strings = appStrings()
-    ElevatedCard(shape = RoundedCornerShape(24.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
+    ElevatedCard(shape = RoundedCornerShape(24.dp), colors = appCardColors()) {
         Column(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(strings.paymentSuggestion(transfer.fromMemberName, transfer.toMemberName), style = MaterialTheme.typography.titleMedium)
             Text(formatAmount(transfer.amount), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
@@ -868,7 +911,7 @@ private fun ExpenseCard(expense: Expense, members: List<Member>, onClick: () -> 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface),
+        colors = appCardColors(),
         onClick = onClick
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -877,7 +920,10 @@ private fun ExpenseCard(expense: Expense, members: List<Member>, onClick: () -> 
                 Text(formatAmount(expense.totalAmount), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
             Text(expense.note.ifBlank { strings.noDescription }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            AssistChip(onClick = {}, label = { Text(strings.payersSummary(expense.payers.joinToString(if (LocalAppLanguage.current == com.encer.offlinesplitwise.data.preferences.AppLanguage.FA) "، " else ", ") { memberName(members, it.memberId) })) })
+            AssistChip(
+                onClick = {},
+                label = { Text(strings.payersSummary(expense.payers.joinToString(if (LocalAppLanguage.current == com.encer.offlinesplitwise.data.preferences.AppLanguage.FA) "، " else ", ") { memberName(members, it.memberId) })) }
+            )
         }
     }
 }
@@ -890,7 +936,7 @@ private fun SettlementCard(
     onDelete: () -> Unit
 ) {
     val strings = appStrings()
-    ElevatedCard(shape = RoundedCornerShape(24.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
+    ElevatedCard(shape = RoundedCornerShape(24.dp), colors = appCardColors()) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(strings.settlementSummary(memberName(members, settlement.fromMemberId), memberName(members, settlement.toMemberId)), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
@@ -920,11 +966,14 @@ private fun SummaryGrid(items: List<Pair<String, String>>) {
             Card(
                 modifier = Modifier.width(160.dp),
                 shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
@@ -933,12 +982,19 @@ private fun SummaryGrid(items: List<Pair<String, String>>) {
 
 @Composable
 private fun SectionHeader(title: String) {
-    Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth())
+    Text(
+        title,
+        style = MaterialTheme.typography.titleLarge,
+        color = MaterialTheme.colorScheme.onBackground,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp)
+    )
 }
 
 @Composable
 private fun EmptyStateCard(title: String, subtitle: String) {
-    ElevatedCard(shape = RoundedCornerShape(28.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
+    ElevatedCard(shape = RoundedCornerShape(28.dp), colors = appCardColors()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -954,7 +1010,10 @@ private fun EmptyStateCard(title: String, subtitle: String) {
 private fun HeroCard(title: String, subtitle: String, icon: @Composable () -> Unit) {
     ElevatedCard(
         shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = Color(0xFF102A31)),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = if (MaterialTheme.colorScheme.background.red < 0.2f) 0.26f else 0.15f),
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 10.dp)
     ) {
         Column(
@@ -965,15 +1024,15 @@ private fun HeroCard(title: String, subtitle: String, icon: @Composable () -> Un
         ) {
             Box(
                 modifier = Modifier
-                    .background(Color.White.copy(alpha = 0.1f), RoundedCornerShape(18.dp))
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.18f), RoundedCornerShape(18.dp))
                     .padding(12.dp)
             ) {
-                androidx.compose.material3.ProvideTextStyle(MaterialTheme.typography.titleLarge.copy(color = Color.White)) {
+                androidx.compose.material3.ProvideTextStyle(MaterialTheme.typography.titleLarge.copy(color = MaterialTheme.colorScheme.onSurface)) {
                     icon()
                 }
             }
-            Text(title, style = MaterialTheme.typography.headlineMedium, color = Color.White)
-            Text(subtitle, style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.82f))
+            Text(title, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text(subtitle, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -1079,7 +1138,7 @@ fun SettingsScreen(
             subtitle = strings.settingsHeroSubtitle,
             icon = { Icon(Icons.Rounded.Settings, contentDescription = null) }
         )
-        ElevatedCard(shape = RoundedCornerShape(28.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
+        ElevatedCard(shape = RoundedCornerShape(28.dp), colors = appCardColors()) {
             Column(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text(strings.languageTitle, style = MaterialTheme.typography.titleLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1096,7 +1155,7 @@ fun SettingsScreen(
                 }
             }
         }
-        ElevatedCard(shape = RoundedCornerShape(28.dp), colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.surface)) {
+        ElevatedCard(shape = RoundedCornerShape(28.dp), colors = appCardColors()) {
             Column(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text(strings.themeTitle, style = MaterialTheme.typography.titleLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
