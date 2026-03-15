@@ -79,8 +79,9 @@ class BalanceCalculator {
         }
 
         settlements.forEach { settlement ->
-            paidMap[settlement.toMemberId] = paidMap.getValue(settlement.toMemberId) + settlement.amount
-            owedMap[settlement.fromMemberId] = owedMap.getValue(settlement.fromMemberId) + settlement.amount
+            // A settlement reduces the sender's debt and the receiver's credit.
+            paidMap[settlement.fromMemberId] = paidMap.getValue(settlement.fromMemberId) + settlement.amount
+            owedMap[settlement.toMemberId] = owedMap.getValue(settlement.toMemberId) + settlement.amount
         }
 
         return members.map { member ->

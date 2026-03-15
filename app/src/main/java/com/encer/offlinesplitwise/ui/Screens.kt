@@ -21,16 +21,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.PersonAddAlt
-import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -62,7 +63,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -210,7 +210,7 @@ fun GroupDashboardScreen(
                 title = { Text(uiState.group?.name ?: "گروه") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
                     }
                 }
             )
@@ -227,7 +227,7 @@ fun GroupDashboardScreen(
                 HeroCard(
                     title = "وضعیت کلی گروه",
                     subtitle = "خرج‌ها، اعضا، تسویه‌ها و مانده‌های باز را از همین‌جا کنترل کن.",
-                    icon = { Icon(Icons.Rounded.ReceiptLong, contentDescription = null) }
+                    icon = { Icon(Icons.AutoMirrored.Rounded.ReceiptLong, contentDescription = null) }
                 )
             }
             item {
@@ -305,7 +305,7 @@ fun MembersScreen(
                 title = { Text("اعضای ${uiState.group?.name.orEmpty()}") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
                     }
                 },
                 actions = {
@@ -423,7 +423,7 @@ fun AddEditExpenseScreen(
                 title = { Text(if (expenseId == null) "خرج جدید" else "ویرایش خرج") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
                     }
                 },
                 actions = {
@@ -447,7 +447,7 @@ fun AddEditExpenseScreen(
             HeroCard(
                 title = "خرج را دقیق ثبت کن",
                 subtitle = "می‌توانی مشخص کنی چه کسی پرداخت کرده و سهم هر نفر چقدر بوده.",
-                icon = { Icon(Icons.Rounded.ReceiptLong, contentDescription = null) }
+                icon = { Icon(Icons.AutoMirrored.Rounded.ReceiptLong, contentDescription = null) }
             )
             OutlinedTextField(
                 value = uiState.title,
@@ -509,10 +509,14 @@ private fun buildEqualPreview(uiState: ExpenseEditorUiState, memberId: Long): St
     if (uiState.splitType != SplitType.EQUAL) return ""
     val totalAmount = parseAmountInput(uiState.totalAmountInput)
     val selectedIds = uiState.members.filter { it.includedInSplit }.map { it.memberId }
-    val shares = if (selectedIds.isEmpty()) emptyList() else selectedIds.sorted().mapIndexed { index, id ->
-        val base = totalAmount / selectedIds.size
-        val extra = if (index < totalAmount % selectedIds.size) 1 else 0
-        ExpenseShare(id, base + extra)
+    val shares: List<ExpenseShare> = if (selectedIds.isEmpty()) {
+        emptyList()
+    } else {
+        selectedIds.sorted().mapIndexed { index, id ->
+            val base = totalAmount / selectedIds.size
+            val extra = if (index < totalAmount % selectedIds.size) 1 else 0
+            ExpenseShare(id, base + extra)
+        }
     }
     val amount = shares.firstOrNull { it.memberId == memberId }?.amount ?: 0
     return if (amount > 0) formatAmount(amount) else "-"
@@ -549,7 +553,7 @@ fun AddSettlementScreen(
                 title = { Text(if (settlementId == null) "ثبت تسویه" else "ویرایش تسویه") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
                     }
                 },
                 actions = {
@@ -631,7 +635,7 @@ fun BalancesScreen(
                 title = { Text("مانده‌های ${uiState.group?.name.orEmpty()}") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
                     }
                 }
             )
@@ -697,7 +701,7 @@ fun ExpenseDetailScreen(
                 title = { Text(expense?.title ?: "جزئیات خرج") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "بازگشت")
                     }
                 },
                 actions = {
@@ -732,7 +736,7 @@ fun ExpenseDetailScreen(
                 HeroCard(
                     title = expense.title,
                     subtitle = expense.note.ifBlank { "بدون توضیح" },
-                    icon = { Icon(Icons.Rounded.ReceiptLong, contentDescription = null) }
+                    icon = { Icon(Icons.AutoMirrored.Rounded.ReceiptLong, contentDescription = null) }
                 )
                 SummaryGrid(
                     items = listOf(

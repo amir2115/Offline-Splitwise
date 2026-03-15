@@ -157,22 +157,28 @@ class ExpenseEditorViewModel(
     private val _uiState = MutableStateFlow(ExpenseEditorUiState(isEdit = expenseId != null))
     val uiState: StateFlow<ExpenseEditorUiState> = _uiState
 
-    private var membersLoaded = false
-    private var expenseLoaded = false
+    private var pendingExpense: Expense? = null
 
     init {
         viewModelScope.launch {
             appContainer.memberRepository.observeMembers(groupId).collect { members ->
                 val previous = _uiState.value.members.associateBy { it.memberId }
+                val payerMap = pendingExpense?.payers?.associateBy { it.memberId }.orEmpty()
+                val shareMap = pendingExpense?.shares?.associateBy { it.memberId }.orEmpty()
                 _uiState.update { current ->
                     current.copy(
                         members = members.map { member ->
-                            previous[member.id] ?: MemberDraftUi(memberId = member.id, name = member.name)
+                            previous[member.id]?.copy(name = member.name) ?: MemberDraftUi(
+                                memberId = member.id,
+                                name = member.name,
+                                includedInSplit = shareMap.containsKey(member.id) || expenseId == null,
+                                payerAmountInput = payerMap[member.id]?.amount?.takeIf { it > 0 }?.toString().orEmpty(),
+                                exactShareInput = shareMap[member.id]?.amount?.takeIf { it > 0 }?.toString().orEmpty()
+                            )
                         },
-                        loaded = membersLoaded || members.isNotEmpty() || expenseId == null
+                        loaded = true
                     )
                 }
-                membersLoaded = true
                 if (expenseId == null && _uiState.value.members.all { !it.includedInSplit }) {
                     _uiState.update { state ->
                         state.copy(members = state.members.map { it.copy(includedInSplit = true) })
@@ -183,6 +189,7 @@ class ExpenseEditorViewModel(
         if (expenseId != null) {
             viewModelScope.launch {
                 val expense = appContainer.expenseRepository.getExpense(expenseId) ?: return@launch
+                pendingExpense = expense
                 val payerMap = expense.payers.associateBy { it.memberId }
                 val shareMap = expense.shares.associateBy { it.memberId }
                 _uiState.update { current ->
@@ -201,10 +208,8 @@ class ExpenseEditorViewModel(
                         loaded = true
                     )
                 }
-                expenseLoaded = true
             }
         } else {
-            expenseLoaded = true
             _uiState.update { it.copy(loaded = true) }
         }
     }
@@ -316,6 +321,7 @@ class SettlementEditorViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SettlementEditorUiState(isEdit = settlementId != null))
     val uiState: StateFlow<SettlementEditorUiState> = _uiState
+    private var existingCreatedAt: Long? = null
 
     init {
         viewModelScope.launch {
@@ -332,6 +338,7 @@ class SettlementEditorViewModel(
         if (settlementId != null) {
             viewModelScope.launch {
                 val settlement = appContainer.settlementRepository.getSettlement(settlementId) ?: return@launch
+                existingCreatedAt = settlement.createdAt
                 _uiState.update {
                     it.copy(
                         fromMemberId = settlement.fromMemberId,
@@ -369,7 +376,7 @@ class SettlementEditorViewModel(
                             toMemberId = toMemberId,
                             amount = amount,
                             note = state.note.trim(),
-                            createdAt = System.currentTimeMillis()
+                            createdAt = existingCreatedAt ?: System.currentTimeMillis()
                         )
                     )
                     _uiState.update { it.copy(saved = true, message = "تسویه ذخیره شد.") }

@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private val persianLocale = Locale("fa")
+private val persianLocale = Locale.forLanguageTag("fa")
 
 fun formatAmount(amount: Int): String {
     val number = NumberFormat.getIntegerInstance(persianLocale).format(amount)
