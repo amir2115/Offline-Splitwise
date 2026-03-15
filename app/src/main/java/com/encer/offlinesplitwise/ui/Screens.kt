@@ -36,12 +36,15 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +55,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -110,6 +114,50 @@ private fun appFieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
 )
 
+@Composable
+private fun appFilterChipColors() = FilterChipDefaults.filterChipColors(
+    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.2f),
+    labelColor = MaterialTheme.colorScheme.onSurface,
+    iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
+    selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+    selectedLeadingIconColor = MaterialTheme.colorScheme.primary,
+    selectedTrailingIconColor = MaterialTheme.colorScheme.primary,
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+)
+
+@Composable
+private fun appAssistChipColors() = AssistChipDefaults.assistChipColors(
+    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.16f),
+    labelColor = MaterialTheme.colorScheme.onSurface,
+    leadingIconContentColor = MaterialTheme.colorScheme.primary,
+    trailingIconContentColor = MaterialTheme.colorScheme.primary
+)
+
+@Composable
+private fun appPrimaryButtonColors() = ButtonDefaults.buttonColors(
+    containerColor = MaterialTheme.colorScheme.primary,
+    contentColor = MaterialTheme.colorScheme.onPrimary,
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+)
+
+@Composable
+private fun appOutlinedButtonColors() = ButtonDefaults.outlinedButtonColors(
+    contentColor = MaterialTheme.colorScheme.onSurface
+)
+
+@Composable
+private fun appSwitchColors() = SwitchDefaults.colors(
+    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+    checkedTrackColor = MaterialTheme.colorScheme.primary,
+    checkedBorderColor = MaterialTheme.colorScheme.primary,
+    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+    uncheckedBorderColor = MaterialTheme.colorScheme.outline
+)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun GroupsListScreen(
@@ -140,7 +188,7 @@ fun GroupsListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = 16.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
@@ -499,7 +547,7 @@ fun AddEditExpenseScreen(
                 value = uiState.title,
                 onValueChange = viewModel::updateTitle,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(strings.expenseTitleLabel) },
+                label = { Text(strings.expenseTitleLabel, style = MaterialTheme.typography.bodyMedium) },
                 colors = appFieldColors(),
                 shape = RoundedCornerShape(20.dp)
             )
@@ -507,7 +555,7 @@ fun AddEditExpenseScreen(
                 value = uiState.note,
                 onValueChange = viewModel::updateNote,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(strings.expenseNoteLabel) },
+                label = { Text(strings.expenseNoteLabel, style = MaterialTheme.typography.bodyMedium) },
                 colors = appFieldColors(),
                 shape = RoundedCornerShape(20.dp)
             )
@@ -515,7 +563,7 @@ fun AddEditExpenseScreen(
                 value = uiState.totalAmountInput,
                 onValueChange = viewModel::updateTotal,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(strings.totalAmountLabel) },
+                label = { Text(strings.totalAmountLabel, style = MaterialTheme.typography.bodyMedium) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 visualTransformation = amountVisualTransformation,
                 colors = appFieldColors(),
@@ -525,12 +573,14 @@ fun AddEditExpenseScreen(
                 FilterChip(
                     selected = uiState.splitType == SplitType.EQUAL,
                     onClick = { viewModel.updateSplitType(SplitType.EQUAL) },
-                    label = { Text(strings.equalSplitLabel, style = MaterialTheme.typography.labelLarge) }
+                    label = { Text(strings.equalSplitLabel, style = MaterialTheme.typography.labelLarge) },
+                    colors = appFilterChipColors()
                 )
                 FilterChip(
                     selected = uiState.splitType == SplitType.EXACT,
                     onClick = { viewModel.updateSplitType(SplitType.EXACT) },
-                    label = { Text(strings.exactSplitLabel, style = MaterialTheme.typography.labelLarge) }
+                    label = { Text(strings.exactSplitLabel, style = MaterialTheme.typography.labelLarge) },
+                    colors = appFilterChipColors()
                 )
             }
             SectionHeader(strings.membersAndPayersTitle)
@@ -547,7 +597,8 @@ fun AddEditExpenseScreen(
             Button(
                 onClick = { viewModel.save() },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(22.dp)
+                shape = RoundedCornerShape(22.dp),
+                colors = appPrimaryButtonColors()
             ) {
                 Text(strings.expenseFormAction(expenseId != null), style = MaterialTheme.typography.labelLarge)
             }
@@ -647,7 +698,7 @@ fun AddSettlementScreen(
                 value = uiState.amountInput,
                 onValueChange = viewModel::setAmount,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(strings.settlementAmountLabel) },
+                label = { Text(strings.settlementAmountLabel, style = MaterialTheme.typography.bodyMedium) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 visualTransformation = amountVisualTransformation,
                 colors = appFieldColors(),
@@ -657,14 +708,15 @@ fun AddSettlementScreen(
                 value = uiState.note,
                 onValueChange = viewModel::setNote,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(strings.noteLabel) },
+                label = { Text(strings.noteLabel, style = MaterialTheme.typography.bodyMedium) },
                 colors = appFieldColors(),
                 shape = RoundedCornerShape(20.dp)
             )
             Button(
                 onClick = { viewModel.save() },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(22.dp)
+                shape = RoundedCornerShape(22.dp),
+                colors = appPrimaryButtonColors()
             ) {
                 Text(strings.settlementFormAction(settlementId != null), style = MaterialTheme.typography.labelLarge)
             }
@@ -718,7 +770,11 @@ fun BalancesScreen(
                             Text(strings.optimizePaymentsTitle, style = MaterialTheme.typography.titleMedium)
                             Text(strings.optimizePaymentsSubtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Switch(checked = simplify, onCheckedChange = { simplify = it })
+                        Switch(
+                            checked = simplify,
+                            onCheckedChange = { simplify = it },
+                            colors = appSwitchColors()
+                        )
                     }
                 }
             }
@@ -838,13 +894,17 @@ private fun MemberEditorCard(
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(member.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                Switch(checked = member.includedInSplit, onCheckedChange = onToggleIncluded)
+                Switch(
+                    checked = member.includedInSplit,
+                    onCheckedChange = onToggleIncluded,
+                    colors = appSwitchColors()
+                )
             }
             OutlinedTextField(
                 value = member.payerAmountInput,
                 onValueChange = onPayerChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(strings.paidHowMuchLabel) },
+                label = { Text(strings.paidHowMuchLabel, style = MaterialTheme.typography.bodyMedium) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 visualTransformation = amountVisualTransformation,
                 colors = appFieldColors(),
@@ -856,7 +916,7 @@ private fun MemberEditorCard(
                         value = member.exactShareInput,
                         onValueChange = onExactShareChange,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text(strings.shareAmountLabel) },
+                        label = { Text(strings.shareAmountLabel, style = MaterialTheme.typography.bodyMedium) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         visualTransformation = amountVisualTransformation,
                         colors = appFieldColors(),
@@ -923,11 +983,17 @@ private fun ExpenseCard(expense: Expense, members: List<Member>, onClick: () -> 
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(expense.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                Text(formatAmount(expense.totalAmount), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text(
+                    formatAmount(expense.totalAmount),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
             }
             Text(expense.note.ifBlank { strings.noDescription }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             AssistChip(
                 onClick = {},
+                colors = appAssistChipColors(),
                 label = {
                     Text(
                         strings.payersSummary(expense.payers.joinToString(if (LocalAppLanguage.current == com.encer.offlinesplitwise.data.preferences.AppLanguage.FA) "، " else ", ") { memberName(members, it.memberId) }),
@@ -951,12 +1017,26 @@ private fun SettlementCard(
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(strings.settlementSummary(memberName(members, settlement.fromMemberId), memberName(members, settlement.toMemberId)), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                Text(formatAmount(settlement.amount), color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
+                Text(
+                    formatAmount(settlement.amount),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontWeight = FontWeight.Bold
+                )
             }
             Text(settlement.note.ifBlank { strings.noDescription }, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onEdit) { Text(strings.edit, style = MaterialTheme.typography.labelLarge) }
-                OutlinedButton(onClick = onDelete, border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)) {
+                OutlinedButton(
+                    onClick = onEdit,
+                    colors = appOutlinedButtonColors()
+                ) {
+                    Text(strings.edit, style = MaterialTheme.typography.labelLarge)
+                }
+                OutlinedButton(
+                    onClick = onDelete,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
                     Text(strings.delete, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
                 }
             }
@@ -1052,7 +1132,8 @@ private fun HeroCard(title: String, subtitle: String, icon: @Composable () -> Un
 private fun ActionChip(label: String, imageVector: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
     AssistChip(
         onClick = onClick,
-        label = { Text(label) },
+        colors = appAssistChipColors(),
+        label = { Text(label, style = MaterialTheme.typography.labelLarge) },
         leadingIcon = { Icon(imageVector, contentDescription = null) }
     )
 }
@@ -1085,7 +1166,14 @@ private fun SimpleMemberPicker(
                 FilterChip(
                     selected = selectedId == member.id,
                     onClick = { onSelect(member.id) },
-                    label = { Text(member.name) }
+                    label = { Text(member.name, style = MaterialTheme.typography.labelLarge) },
+                    colors = appFilterChipColors(),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = selectedId == member.id,
+                        borderColor = MaterialTheme.colorScheme.outline,
+                        selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    )
                 )
             }
         }
@@ -1107,21 +1195,22 @@ private fun NameDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = { onConfirm(value) }) {
-                Text(confirmLabel)
+                Text(confirmLabel, style = MaterialTheme.typography.labelLarge)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(strings.cancel)
+                Text(strings.cancel, style = MaterialTheme.typography.labelLarge)
             }
         },
-        title = { Text(title) },
+        title = { Text(title, style = MaterialTheme.typography.titleLarge) },
         text = {
             OutlinedTextField(
                 value = value,
                 onValueChange = { value = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(placeholder) },
+                label = { Text(placeholder, style = MaterialTheme.typography.bodyMedium) },
+                colors = appFieldColors(),
                 shape = RoundedCornerShape(18.dp)
             )
         }
@@ -1156,12 +1245,14 @@ fun SettingsScreen(
                     FilterChip(
                         selected = currentLanguage == com.encer.offlinesplitwise.data.preferences.AppLanguage.FA,
                         onClick = { onLanguageSelected(com.encer.offlinesplitwise.data.preferences.AppLanguage.FA) },
-                        label = { Text(strings.persianLabel, style = MaterialTheme.typography.labelLarge) }
+                        label = { Text(strings.persianLabel, style = MaterialTheme.typography.labelLarge) },
+                        colors = appFilterChipColors()
                     )
                     FilterChip(
                         selected = currentLanguage == com.encer.offlinesplitwise.data.preferences.AppLanguage.EN,
                         onClick = { onLanguageSelected(com.encer.offlinesplitwise.data.preferences.AppLanguage.EN) },
-                        label = { Text(strings.englishLabel, style = MaterialTheme.typography.labelLarge) }
+                        label = { Text(strings.englishLabel, style = MaterialTheme.typography.labelLarge) },
+                        colors = appFilterChipColors()
                     )
                 }
             }
@@ -1173,12 +1264,14 @@ fun SettingsScreen(
                     FilterChip(
                         selected = currentTheme == com.encer.offlinesplitwise.data.preferences.AppThemeMode.LIGHT,
                         onClick = { onThemeSelected(com.encer.offlinesplitwise.data.preferences.AppThemeMode.LIGHT) },
-                        label = { Text(strings.lightLabel, style = MaterialTheme.typography.labelLarge) }
+                        label = { Text(strings.lightLabel, style = MaterialTheme.typography.labelLarge) },
+                        colors = appFilterChipColors()
                     )
                     FilterChip(
                         selected = currentTheme == com.encer.offlinesplitwise.data.preferences.AppThemeMode.DARK,
                         onClick = { onThemeSelected(com.encer.offlinesplitwise.data.preferences.AppThemeMode.DARK) },
-                        label = { Text(strings.darkLabel, style = MaterialTheme.typography.labelLarge) }
+                        label = { Text(strings.darkLabel, style = MaterialTheme.typography.labelLarge) },
+                        colors = appFilterChipColors()
                     )
                 }
             }
