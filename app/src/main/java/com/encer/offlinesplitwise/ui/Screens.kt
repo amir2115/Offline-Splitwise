@@ -63,6 +63,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -76,6 +77,8 @@ import com.encer.offlinesplitwise.domain.MemberBalance
 import com.encer.offlinesplitwise.domain.Settlement
 import com.encer.offlinesplitwise.domain.SimplifiedTransfer
 import com.encer.offlinesplitwise.domain.SplitType
+
+private val amountVisualTransformation = GroupedNumberVisualTransformation()
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -468,7 +471,8 @@ fun AddEditExpenseScreen(
                 onValueChange = viewModel::updateTotal,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("مبلغ کل (تومان)") },
-                keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = amountVisualTransformation,
                 shape = RoundedCornerShape(20.dp)
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -596,7 +600,8 @@ fun AddSettlementScreen(
                 onValueChange = viewModel::setAmount,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("مبلغ تسویه") },
-                keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = amountVisualTransformation,
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
@@ -785,7 +790,8 @@ private fun MemberEditorCard(
                 onValueChange = onPayerChange,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("چقدر پرداخت کرده؟") },
-                keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = amountVisualTransformation,
                 shape = RoundedCornerShape(18.dp)
             )
             if (member.includedInSplit) {
@@ -795,7 +801,8 @@ private fun MemberEditorCard(
                         onValueChange = onExactShareChange,
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("سهم این نفر") },
-                        keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        visualTransformation = amountVisualTransformation,
                         shape = RoundedCornerShape(18.dp)
                     )
                 } else {
@@ -938,7 +945,8 @@ private fun EmptyStateCard(title: String, subtitle: String) {
 private fun HeroCard(title: String, subtitle: String, icon: @Composable () -> Unit) {
     ElevatedCard(
         shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = Color(0xFF102A31))
+        colors = CardDefaults.elevatedCardColors(containerColor = Color(0xFF102A31)),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 10.dp)
     ) {
         Column(
             modifier = Modifier
@@ -982,6 +990,7 @@ private fun DetailLine(label: String, value: String) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SimpleMemberPicker(
     label: String,

@@ -8,9 +8,11 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.encer.offlinesplitwise.R
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF0F766E),
@@ -32,51 +34,62 @@ private val DarkColors = darkColorScheme(
     secondary = Color(0xFF93C5FD),
     background = Color(0xFF101B1D),
     surface = Color(0xFF172427),
-    onSurface = Color(0xFFF6F8F3)
+    onSurface = Color(0xFFF6F8F3),
+    onSurfaceVariant = Color(0xFFB3C6C8)
+)
+
+private val IranYekan = FontFamily(
+    Font(R.raw.iran_yekan_thin, FontWeight.Thin),
+    Font(R.raw.iran_yekan_light, FontWeight.Light),
+    Font(R.raw.iran_yekan_regular, FontWeight.Normal),
+    Font(R.raw.iran_yekan_medium, FontWeight.Medium),
+    Font(R.raw.iran_yekan_bold, FontWeight.Bold),
+    Font(R.raw.iran_yekan_extra_bold, FontWeight.ExtraBold),
+    Font(R.raw.iran_yekan_black, FontWeight.Black)
 )
 
 private val AppTypography = Typography(
     headlineLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
-        lineHeight = 34.sp
+        fontFamily = IranYekan,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 29.sp,
+        lineHeight = 38.sp
     ),
     headlineMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
+        fontFamily = IranYekan,
+        fontWeight = FontWeight.Bold,
         fontSize = 24.sp,
-        lineHeight = 30.sp
+        lineHeight = 33.sp
     ),
     titleLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = IranYekan,
         fontWeight = FontWeight.SemiBold,
         fontSize = 20.sp,
-        lineHeight = 26.sp
+        lineHeight = 30.sp
     ),
     titleMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = IranYekan,
         fontWeight = FontWeight.Medium,
         fontSize = 16.sp,
-        lineHeight = 22.sp
+        lineHeight = 25.sp
     ),
     bodyLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = IranYekan,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
-        lineHeight = 24.sp
+        lineHeight = 28.sp
     ),
     bodyMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = IranYekan,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
-        lineHeight = 20.sp
+        lineHeight = 24.sp
     ),
     labelLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = IranYekan,
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
-        lineHeight = 18.sp
+        lineHeight = 22.sp
     )
 )
 
