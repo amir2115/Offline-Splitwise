@@ -126,7 +126,7 @@ fun GroupsListScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text(strings.appTitle) },
+                title = { Text(strings.appTitle, style = MaterialTheme.typography.titleLarge) },
                 colors = appTopBarColors(),
                 actions = {
                     IconButton(onClick = { showCreateDialog = true }) {
@@ -140,7 +140,7 @@ fun GroupsListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
@@ -243,7 +243,7 @@ fun GroupDashboardScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text(uiState.group?.name ?: strings.groupFallbackTitle) },
+                title = { Text(uiState.group?.name ?: strings.groupFallbackTitle, style = MaterialTheme.typography.titleLarge) },
                 colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -340,7 +340,7 @@ fun MembersScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text(strings.membersOfGroup(uiState.group?.name.orEmpty())) },
+                title = { Text(strings.membersOfGroup(uiState.group?.name.orEmpty()), style = MaterialTheme.typography.titleLarge) },
                 colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -375,7 +375,12 @@ fun MembersScreen(
                                 .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.14f), CircleShape)
                                 .padding(horizontal = 14.dp, vertical = 10.dp)
                         ) {
-                            Text(member.name.take(1), color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
+                            Text(
+                                member.name.take(1),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
@@ -460,7 +465,7 @@ fun AddEditExpenseScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(strings.expenseFormTitle(expenseId != null)) },
+                title = { Text(strings.expenseFormTitle(expenseId != null), style = MaterialTheme.typography.titleLarge) },
                 colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -520,12 +525,12 @@ fun AddEditExpenseScreen(
                 FilterChip(
                     selected = uiState.splitType == SplitType.EQUAL,
                     onClick = { viewModel.updateSplitType(SplitType.EQUAL) },
-                    label = { Text(strings.equalSplitLabel) }
+                    label = { Text(strings.equalSplitLabel, style = MaterialTheme.typography.labelLarge) }
                 )
                 FilterChip(
                     selected = uiState.splitType == SplitType.EXACT,
                     onClick = { viewModel.updateSplitType(SplitType.EXACT) },
-                    label = { Text(strings.exactSplitLabel) }
+                    label = { Text(strings.exactSplitLabel, style = MaterialTheme.typography.labelLarge) }
                 )
             }
             SectionHeader(strings.membersAndPayersTitle)
@@ -544,7 +549,7 @@ fun AddEditExpenseScreen(
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(22.dp)
             ) {
-                Text(strings.expenseFormAction(expenseId != null))
+                Text(strings.expenseFormAction(expenseId != null), style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -596,7 +601,7 @@ fun AddSettlementScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(strings.settlementFormTitle(settlementId != null)) },
+                title = { Text(strings.settlementFormTitle(settlementId != null), style = MaterialTheme.typography.titleLarge) },
                 colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -661,7 +666,7 @@ fun AddSettlementScreen(
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(22.dp)
             ) {
-                Text(strings.settlementFormAction(settlementId != null))
+                Text(strings.settlementFormAction(settlementId != null), style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -683,7 +688,7 @@ fun BalancesScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text(strings.balancesOfGroup(uiState.group?.name.orEmpty())) },
+                title = { Text(strings.balancesOfGroup(uiState.group?.name.orEmpty()), style = MaterialTheme.typography.titleLarge) },
                 colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -697,7 +702,7 @@ fun BalancesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
@@ -751,7 +756,7 @@ fun ExpenseDetailScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text(expense?.title ?: strings.expenseDetailsFallback) },
+                title = { Text(expense?.title ?: strings.expenseDetailsFallback, style = MaterialTheme.typography.titleLarge) },
                 colors = appTopBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -776,7 +781,7 @@ fun ExpenseDetailScreen(
     ) { padding ->
         if (expense == null) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text(strings.expenseNotFound)
+                Text(strings.expenseNotFound, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
             }
         } else {
             Column(
@@ -879,6 +884,7 @@ private fun BalanceCard(balance: MemberBalance) {
                 Text(balance.memberName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Text(
                     text = strings.balanceState(balance.netBalance),
+                    style = MaterialTheme.typography.labelLarge,
                     color = tone,
                     fontWeight = FontWeight.Bold
                 )
@@ -922,7 +928,12 @@ private fun ExpenseCard(expense: Expense, members: List<Member>, onClick: () -> 
             Text(expense.note.ifBlank { strings.noDescription }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             AssistChip(
                 onClick = {},
-                label = { Text(strings.payersSummary(expense.payers.joinToString(if (LocalAppLanguage.current == com.encer.offlinesplitwise.data.preferences.AppLanguage.FA) "، " else ", ") { memberName(members, it.memberId) })) }
+                label = {
+                    Text(
+                        strings.payersSummary(expense.payers.joinToString(if (LocalAppLanguage.current == com.encer.offlinesplitwise.data.preferences.AppLanguage.FA) "، " else ", ") { memberName(members, it.memberId) }),
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
             )
         }
     }
@@ -944,9 +955,9 @@ private fun SettlementCard(
             }
             Text(settlement.note.ifBlank { strings.noDescription }, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onEdit) { Text(strings.edit) }
+                OutlinedButton(onClick = onEdit) { Text(strings.edit, style = MaterialTheme.typography.labelLarge) }
                 OutlinedButton(onClick = onDelete, border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)) {
-                    Text(strings.delete, color = MaterialTheme.colorScheme.error)
+                    Text(strings.delete, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -1145,12 +1156,12 @@ fun SettingsScreen(
                     FilterChip(
                         selected = currentLanguage == com.encer.offlinesplitwise.data.preferences.AppLanguage.FA,
                         onClick = { onLanguageSelected(com.encer.offlinesplitwise.data.preferences.AppLanguage.FA) },
-                        label = { Text(strings.persianLabel) }
+                        label = { Text(strings.persianLabel, style = MaterialTheme.typography.labelLarge) }
                     )
                     FilterChip(
                         selected = currentLanguage == com.encer.offlinesplitwise.data.preferences.AppLanguage.EN,
                         onClick = { onLanguageSelected(com.encer.offlinesplitwise.data.preferences.AppLanguage.EN) },
-                        label = { Text(strings.englishLabel) }
+                        label = { Text(strings.englishLabel, style = MaterialTheme.typography.labelLarge) }
                     )
                 }
             }
@@ -1162,12 +1173,12 @@ fun SettingsScreen(
                     FilterChip(
                         selected = currentTheme == com.encer.offlinesplitwise.data.preferences.AppThemeMode.LIGHT,
                         onClick = { onThemeSelected(com.encer.offlinesplitwise.data.preferences.AppThemeMode.LIGHT) },
-                        label = { Text(strings.lightLabel) }
+                        label = { Text(strings.lightLabel, style = MaterialTheme.typography.labelLarge) }
                     )
                     FilterChip(
                         selected = currentTheme == com.encer.offlinesplitwise.data.preferences.AppThemeMode.DARK,
                         onClick = { onThemeSelected(com.encer.offlinesplitwise.data.preferences.AppThemeMode.DARK) },
-                        label = { Text(strings.darkLabel) }
+                        label = { Text(strings.darkLabel, style = MaterialTheme.typography.labelLarge) }
                     )
                 }
             }

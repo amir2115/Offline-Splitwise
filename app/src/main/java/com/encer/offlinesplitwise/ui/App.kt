@@ -92,7 +92,12 @@ fun OfflineSplitwiseApp(appContainer: AppContainer) {
                                             contentDescription = null
                                         )
                                     },
-                                    label = { Text(if (destination == RootDestination.HOME) strings.homeTab else strings.settingsTab) },
+                                    label = {
+                                        Text(
+                                            if (destination == RootDestination.HOME) strings.homeTab else strings.settingsTab,
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    },
                                     colors = NavigationBarItemDefaults.colors(
                                         selectedIconColor = MaterialTheme.colorScheme.onSecondary,
                                         selectedTextColor = MaterialTheme.colorScheme.onSurface,
