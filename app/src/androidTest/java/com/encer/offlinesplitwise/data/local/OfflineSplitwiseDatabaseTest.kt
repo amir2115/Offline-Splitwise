@@ -3,7 +3,7 @@ package com.encer.offlinesplitwise.data.local
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.encer.offlinesplitwise.domain.SplitType
+import com.encer.offlinesplitwise.domain.model.SplitType
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
