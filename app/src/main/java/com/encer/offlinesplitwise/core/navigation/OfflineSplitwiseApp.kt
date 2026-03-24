@@ -1,5 +1,6 @@
 package com.encer.offlinesplitwise.core.navigation
 
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -24,9 +26,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -88,6 +93,7 @@ fun OfflineSplitwiseApp() {
         LocalLayoutDirection provides layoutDirection
     ) {
         OfflineSplitwiseTheme(darkTheme = settings.themeMode == com.encer.offlinesplitwise.data.preferences.AppThemeMode.DARK) {
+            AppSystemBars(darkTheme = settings.themeMode == com.encer.offlinesplitwise.data.preferences.AppThemeMode.DARK)
             if (session == null && !guestMode) {
                 Box(
                     modifier = Modifier
@@ -266,6 +272,22 @@ fun OfflineSplitwiseApp() {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AppSystemBars(darkTheme: Boolean) {
+    val view = LocalView.current
+    val colorScheme = MaterialTheme.colorScheme
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? Activity)?.window ?: return@SideEffect
+            window.statusBarColor = Color.Transparent.toArgb()
+            window.navigationBarColor = colorScheme.surface.copy(alpha = 0.98f).toArgb()
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 }

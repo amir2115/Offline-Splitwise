@@ -8,5 +8,6 @@ interface GroupRepository {
     suspend fun createGroup(name: String): String
     suspend fun updateGroup(group: Group)
     suspend fun deleteGroup(groupId: String)
+    suspend fun leaveGroup(groupId: String)
     suspend fun getGroup(groupId: String): Group?
 }

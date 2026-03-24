@@ -26,6 +26,9 @@ interface MemberDao {
     @Query("SELECT * FROM members WHERE groupId = :groupId AND userId = :userId AND deletedAt IS NULL LIMIT 1")
     suspend fun getByGroupAndUserId(groupId: String, userId: String): MemberEntity?
 
+    @Query("SELECT DISTINCT groupId FROM members WHERE userId = :userId AND isArchived = 0 AND deletedAt IS NULL")
+    fun observeActiveGroupIdsForUser(userId: String): Flow<List<String>>
+
     @Upsert
     suspend fun upsert(member: MemberEntity)
 

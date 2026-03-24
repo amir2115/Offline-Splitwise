@@ -66,6 +66,7 @@ class GroupsViewModel @Inject constructor(
             groups = groups,
             invites = nextInvites,
             isLoading = hasSession && (nextInvitesLoading || (groups.isEmpty() && syncStatus.isSyncing)),
+            canLeaveGroups = hasSession,
             errorMessage = nextError,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GroupsUiState())
@@ -84,6 +85,10 @@ class GroupsViewModel @Inject constructor(
 
     fun deleteGroup(groupId: String) {
         viewModelScope.launch { groupRepository.deleteGroup(groupId) }
+    }
+
+    fun leaveGroup(groupId: String) {
+        viewModelScope.launch { groupRepository.leaveGroup(groupId) }
     }
 
     fun refreshInvites() {

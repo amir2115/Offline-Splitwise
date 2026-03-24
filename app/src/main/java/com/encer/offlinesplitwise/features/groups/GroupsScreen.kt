@@ -11,6 +11,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.MailOutline
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -69,6 +72,7 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
     var editingGroupId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingGroupActionId by rememberSaveable { mutableStateOf<String?>(null) }
 
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -240,7 +244,7 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
                             IconButton(onClick = { editingGroupId = group.id }) {
                                 Icon(Icons.Rounded.Edit, contentDescription = strings.edit)
                             }
-                            IconButton(onClick = { viewModel.deleteGroup(group.id) }) {
+                            IconButton(onClick = { pendingGroupActionId = group.id }) {
                                 Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
                             }
                         }
@@ -285,6 +289,112 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
                 }
             )
         }
+    }
+
+    pendingGroupActionId?.let { groupId ->
+        val group = uiState.groups.firstOrNull { it.id == groupId }
+        if (group != null) {
+            GroupActionDialog(
+                groupName = group.name,
+                canLeave = uiState.canLeaveGroups,
+                onDismiss = { pendingGroupActionId = null },
+                onDeleteForEveryone = {
+                    viewModel.deleteGroup(group.id)
+                    pendingGroupActionId = null
+                },
+                onLeaveGroup = {
+                    viewModel.leaveGroup(group.id)
+                    pendingGroupActionId = null
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun GroupActionDialog(
+    groupName: String,
+    canLeave: Boolean,
+    onDismiss: () -> Unit,
+    onDeleteForEveryone: () -> Unit,
+    onLeaveGroup: () -> Unit,
+) {
+    val strings = appStrings()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    strings.groupActionDialogTitle(groupName),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    strings.groupActionDialogSubtitle,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ActionHintCard(
+                    title = strings.leaveGroup,
+                    subtitle = strings.groupLeaveMessage,
+                    accent = MaterialTheme.colorScheme.error,
+                    onClick = onLeaveGroup
+                )
+                if (canLeave) {
+                    ActionHintCard(
+                        title = strings.deleteGroupForEveryone,
+                        subtitle = strings.groupDeleteConfirmMessage,
+                        accent = MaterialTheme.colorScheme.outline,
+                        onClick = onDeleteForEveryone
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                Text(strings.cancel, style = MaterialTheme.typography.labelLarge)
+            }
+        },
+        dismissButton = {}
+    )
+}
+
+@Composable
+private fun ActionHintCard(
+    title: String,
+    subtitle: String,
+    accent: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = accent.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(20.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = accent.copy(alpha = 0.18f),
+                shape = RoundedCornerShape(20.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
