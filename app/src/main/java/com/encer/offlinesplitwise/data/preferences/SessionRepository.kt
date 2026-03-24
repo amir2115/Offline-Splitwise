@@ -18,6 +18,7 @@ class SessionRepository(context: Context) {
     fun currentSession(): AuthSession? = _session.value
     fun currentAccessToken(): String? = _session.value?.accessToken
     fun currentRefreshToken(): String? = _session.value?.refreshToken
+    fun currentDataOwnerUserId(): String? = preferences.getString(SessionKeys.DATA_OWNER_USER_ID, null)
 
     fun saveSession(session: AuthSession) {
         preferences.edit()
@@ -61,6 +62,12 @@ class SessionRepository(context: Context) {
             if (timestamp == null) remove(SessionKeys.LAST_SYNCED_AT) else putLong(SessionKeys.LAST_SYNCED_AT, timestamp)
         }.apply()
         _lastSyncedAt.value = timestamp
+    }
+
+    fun setDataOwnerUserId(userId: String?) {
+        preferences.edit().apply {
+            if (userId.isNullOrBlank()) remove(SessionKeys.DATA_OWNER_USER_ID) else putString(SessionKeys.DATA_OWNER_USER_ID, userId)
+        }.apply()
     }
 
     private fun loadSession(): AuthSession? {

@@ -66,12 +66,13 @@ data class RemoteGroup(
 data class RemoteMember(
     val id: String,
     @SerialName("group_id") val groupId: String,
-    val name: String,
+    val username: String,
     @SerialName("is_archived") val isArchived: Boolean = false,
+    @SerialName("membership_status") val membershipStatus: String = "ACTIVE",
     @SerialName("created_at") val createdAt: String,
     @SerialName("updated_at") val updatedAt: String,
     @SerialName("deleted_at") val deletedAt: String? = null,
-    @SerialName("user_id") val userId: String,
+    @SerialName("user_id") val userId: String? = null,
 )
 
 @Serializable
@@ -136,11 +137,28 @@ data class RemoteGroupPayload(
 data class RemoteMemberPayload(
     val id: String,
     @SerialName("group_id") val groupId: String,
-    val name: String,
+    val username: String,
     @SerialName("is_archived") val isArchived: Boolean = false,
     @SerialName("created_at") val createdAt: String,
     @SerialName("updated_at") val updatedAt: String,
     @SerialName("deleted_at") val deletedAt: String? = null,
+)
+
+@Serializable
+data class RemoteGroupInvite(
+    val id: String,
+    @SerialName("group_id") val groupId: String,
+    @SerialName("member_id") val memberId: String,
+    val username: String,
+    @SerialName("inviter_user_id") val inviterUserId: String,
+    @SerialName("invitee_user_id") val inviteeUserId: String,
+    val status: String,
+    @SerialName("group_name") val groupName: String,
+    @SerialName("inviter_username") val inviterUsername: String,
+    @SerialName("invitee_username") val inviteeUsername: String,
+    @SerialName("responded_at") val respondedAt: String? = null,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("updated_at") val updatedAt: String,
 )
 
 @Serializable

@@ -151,5 +151,5 @@ private fun SummaryGrid(items: List<Pair<String, String>>) {
 }
 
 private fun memberName(members: List<Member>, memberId: String): String {
-    return members.firstOrNull { it.id == memberId }?.name ?: if (java.util.Locale.getDefault().language == "fa") "کاربر $memberId" else "Member $memberId"
+    return members.firstOrNull { it.id == memberId }?.username ?: if (java.util.Locale.getDefault().language == "fa") "کاربر $memberId" else "Member $memberId"
 }

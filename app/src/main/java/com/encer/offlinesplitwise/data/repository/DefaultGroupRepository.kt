@@ -10,6 +10,7 @@ import com.encer.offlinesplitwise.data.repository.mapper.toDomain
 import com.encer.offlinesplitwise.data.repository.mapper.toEntity
 import com.encer.offlinesplitwise.data.sync.SyncCoordinator
 import com.encer.offlinesplitwise.domain.model.Group
+import com.encer.offlinesplitwise.domain.model.MembershipStatus
 import com.encer.offlinesplitwise.domain.repository.GroupRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -42,10 +43,11 @@ class DefaultGroupRepository @Inject constructor(
                 MemberEntity(
                     id = UUID.randomUUID().toString(),
                     groupId = id,
-                    name = session.name,
+                    username = session.username,
                     createdAt = now,
                     updatedAt = now,
                     userId = session.userId,
+                    membershipStatus = MembershipStatus.ACTIVE,
                     syncState = SyncState.PENDING_UPSERT
                 )
             )

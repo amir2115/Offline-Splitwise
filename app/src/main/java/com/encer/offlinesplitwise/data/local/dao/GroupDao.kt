@@ -1,9 +1,8 @@
 package com.encer.offlinesplitwise.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import com.encer.offlinesplitwise.data.local.entity.*
 import kotlinx.coroutines.flow.Flow
 
@@ -21,10 +20,10 @@ interface GroupDao {
     @Query("SELECT * FROM groups WHERE id = :groupId LIMIT 1")
     suspend fun getById(groupId: String): GroupEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsert(group: GroupEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsertAll(groups: List<GroupEntity>)
 
     @Query("DELETE FROM groups WHERE id = :groupId")

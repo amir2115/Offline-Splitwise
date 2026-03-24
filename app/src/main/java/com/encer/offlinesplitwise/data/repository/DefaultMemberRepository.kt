@@ -9,6 +9,7 @@ import com.encer.offlinesplitwise.data.repository.mapper.normalizeMemberIdentity
 import com.encer.offlinesplitwise.data.repository.mapper.toDomain
 import com.encer.offlinesplitwise.data.repository.mapper.toEntity
 import com.encer.offlinesplitwise.data.sync.SyncCoordinator
+import com.encer.offlinesplitwise.domain.model.MembershipStatus
 import com.encer.offlinesplitwise.domain.model.Member
 import com.encer.offlinesplitwise.domain.repository.MemberRepository
 import javax.inject.Inject
@@ -36,10 +37,18 @@ class DefaultMemberRepository @Inject constructor(
             }
             return
         }
-        val normalizedCandidates = listOf(session.name, session.username).map(::normalizeMemberIdentity).filter { it.isNotBlank() }.toSet()
-        val matchedMember = memberDao.getActiveMembers(groupId).firstOrNull { member -> normalizeMemberIdentity(member.name) in normalizedCandidates }
+        val normalizedCandidates = listOf(session.username).map(::normalizeMemberIdentity).filter { it.isNotBlank() }.toSet()
+        val matchedMember = memberDao.getActiveMembers(groupId).firstOrNull { member -> normalizeMemberIdentity(member.username) in normalizedCandidates }
         if (matchedMember != null) {
-            memberDao.upsert(matchedMember.copy(userId = session.userId, updatedAt = now, syncState = SyncState.PENDING_UPSERT))
+            memberDao.upsert(
+                matchedMember.copy(
+                    userId = session.userId,
+                    username = session.username,
+                    membershipStatus = MembershipStatus.ACTIVE,
+                    updatedAt = now,
+                    syncState = SyncState.PENDING_UPSERT
+                )
+            )
             if (group.userId == null) {
                 groupDao.upsert(group.copy(userId = session.userId, updatedAt = now, syncState = SyncState.PENDING_UPSERT))
             }
@@ -54,20 +63,31 @@ class DefaultMemberRepository @Inject constructor(
             MemberEntity(
                 id = UUID.randomUUID().toString(),
                 groupId = groupId,
-                name = session.name,
+                username = session.username,
                 createdAt = now,
                 updatedAt = now,
                 userId = session.userId,
+                membershipStatus = MembershipStatus.ACTIVE,
                 syncState = SyncState.PENDING_UPSERT
             )
         )
         syncCoordinator.requestSync()
     }
 
-    override suspend fun addMember(groupId: String, name: String): String {
+    override suspend fun addMember(groupId: String, username: String): String {
         val now = System.currentTimeMillis()
         val id = UUID.randomUUID().toString()
-        memberDao.upsert(MemberEntity(id = id, groupId = groupId, name = name.trim(), createdAt = now, updatedAt = now, syncState = SyncState.PENDING_UPSERT))
+        memberDao.upsert(
+            MemberEntity(
+                id = id,
+                groupId = groupId,
+                username = normalizeMemberIdentity(username),
+                createdAt = now,
+                updatedAt = now,
+                membershipStatus = MembershipStatus.PENDING_INVITE,
+                syncState = SyncState.PENDING_UPSERT
+            )
+        )
         syncCoordinator.requestSync()
         return id
     }

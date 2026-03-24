@@ -31,11 +31,41 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
+data class InvalidMemberUsernameIssue(
+    val memberId: String,
+    val username: String,
+)
 
 data class SyncStatus(
     val isSyncing: Boolean = false,
     val lastSyncedAt: Long? = null,
     val lastError: String? = null,
+    val invalidMemberUsernames: List<InvalidMemberUsernameIssue> = emptyList(),
+)
+
+private val syncErrorJson = Json { ignoreUnknownKeys = true }
+
+@Serializable
+private data class SyncErrorEnvelope(
+    val error: SyncErrorPayload? = null,
+)
+
+@Serializable
+private data class SyncErrorPayload(
+    val code: String? = null,
+    val message: String? = null,
+    val details: List<InvalidMemberUsernamePayload> = emptyList(),
+)
+
+@Serializable
+private data class InvalidMemberUsernamePayload(
+    @SerialName("member_id") val memberId: String,
+    val username: String,
 )
 
 class SyncCoordinator(
@@ -65,10 +95,11 @@ class SyncCoordinator(
             .onFailure {
                 if (it is ApiError && it.status == 401) {
                     sessionRepository.clearSession()
-                    _syncStatus.value = SyncStatus(lastError = it.message)
+                    _syncStatus.value = SyncStatus(lastError = it.message, invalidMemberUsernames = emptyList())
                 }
             }
             .onSuccess { remoteUser ->
+                prepareLocalStateForAuthenticatedUser(remoteUser.id)
                 sessionRepository.saveSession(
                     session.copy(
                         userId = remoteUser.id,
@@ -112,15 +143,18 @@ class SyncCoordinator(
                     performIncrementalSync()
                 }
             }.onFailure { error ->
+                val blockers = parseInvalidMemberIssues(error)
                 _syncStatus.value = _syncStatus.value.copy(
                     isSyncing = false,
                     lastError = error.message ?: "Sync failed",
+                    invalidMemberUsernames = blockers,
                 )
             }.onSuccess {
                 _syncStatus.value = SyncStatus(
                     isSyncing = false,
                     lastSyncedAt = sessionRepository.observeLastSyncedAt().value,
                     lastError = null,
+                    invalidMemberUsernames = emptyList(),
                 )
             }
         }
@@ -136,6 +170,7 @@ class SyncCoordinator(
                 name = response.user.name,
                 username = response.user.username,
             )
+            prepareLocalStateForAuthenticatedUser(session.userId)
             sessionRepository.saveSession(session)
             if (networkMonitor.refreshApiReachability()) {
                 runCatching {
@@ -149,6 +184,7 @@ class SyncCoordinator(
                         isSyncing = false,
                         lastSyncedAt = sessionRepository.observeLastSyncedAt().value,
                         lastError = error.message ?: "Sync failed",
+                        invalidMemberUsernames = parseInvalidMemberIssues(error),
                     )
                 }
             }
@@ -236,7 +272,18 @@ class SyncCoordinator(
     private suspend fun applySyncResponse(response: SyncResponse) {
         database.withTransaction {
             if (response.changes.groups.isNotEmpty()) groupDao.upsertAll(response.changes.groups.map { it.toEntity() })
-            if (response.changes.members.isNotEmpty()) memberDao.upsertAll(response.changes.members.map { it.toEntity() })
+            if (response.changes.members.isNotEmpty()) {
+                memberDao.upsertAll(response.changes.members.map { it.toEntity() })
+                response.changes.members.forEach { member ->
+                    member.userId?.let { userId ->
+                        memberDao.hardDeleteByGroupAndUserIdExceptId(
+                            groupId = member.groupId,
+                            userId = userId,
+                            keepId = member.id,
+                        )
+                    }
+                }
+            }
             if (response.changes.expenses.isNotEmpty()) {
                 syncDao.replaceExpenses(
                     expenses = response.changes.expenses.map { it.toEntity() },
@@ -254,6 +301,7 @@ class SyncCoordinator(
         }
 
         sessionRepository.setLastSyncedAt(parseIsoInstant(response.nextCursor))
+        sessionRepository.currentSession()?.userId?.let(sessionRepository::setDataOwnerUserId)
     }
 
     private suspend fun hasAnyLocalData(): Boolean {
@@ -261,6 +309,16 @@ class SyncCoordinator(
             memberDao.getAll().isNotEmpty() ||
             expenseDao.getAll().isNotEmpty() ||
             settlementDao.getAll().isNotEmpty()
+    }
+
+    private suspend fun prepareLocalStateForAuthenticatedUser(userId: String) {
+        withContext(Dispatchers.IO) {
+            val currentOwner = sessionRepository.currentDataOwnerUserId()
+            if (currentOwner == null || currentOwner == userId) return@withContext
+            database.clearAllTables()
+            sessionRepository.setLastSyncedAt(null)
+            _syncStatus.value = SyncStatus()
+        }
     }
 }
 
@@ -275,3 +333,13 @@ private fun SyncImportRequest.toPushPayload() = SyncPushPayload(
     deletedExpenseIds = deletedExpenseIds,
     deletedSettlementIds = deletedSettlementIds,
 )
+
+private fun parseInvalidMemberIssues(error: Throwable): List<InvalidMemberUsernameIssue> {
+    val apiError = error as? ApiError ?: return emptyList()
+    val payload = apiError.payload ?: return emptyList()
+    return runCatching {
+        val envelope = syncErrorJson.decodeFromString(SyncErrorEnvelope.serializer(), payload)
+        val details = envelope.error?.takeIf { it.code == "invalid_member_usernames" }?.details.orEmpty()
+        details.map { InvalidMemberUsernameIssue(memberId = it.memberId, username = it.username) }
+    }.getOrDefault(emptyList())
+}

@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -73,6 +74,12 @@ fun OfflineSplitwiseApp() {
 
     androidx.compose.runtime.LaunchedEffect(settings.language) {
         Locale.setDefault(Locale.forLanguageTag(settings.language.tag))
+    }
+
+    LaunchedEffect(session?.userId) {
+        if (session != null) {
+            appShellViewModel.syncCoordinator.requestSync()
+        }
     }
 
     CompositionLocalProvider(

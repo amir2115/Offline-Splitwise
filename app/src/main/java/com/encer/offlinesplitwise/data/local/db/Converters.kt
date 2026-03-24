@@ -2,6 +2,7 @@ package com.encer.offlinesplitwise.data.local.db
 
 import androidx.room.TypeConverter
 import com.encer.offlinesplitwise.data.local.entity.SyncState
+import com.encer.offlinesplitwise.domain.model.MembershipStatus
 import com.encer.offlinesplitwise.domain.model.SplitType
 
 class Converters {
@@ -16,4 +17,10 @@ class Converters {
 
     @TypeConverter
     fun stringToSyncState(value: String): SyncState = SyncState.valueOf(value)
+
+    @TypeConverter
+    fun membershipStatusToString(status: MembershipStatus): String = status.name
+
+    @TypeConverter
+    fun stringToMembershipStatus(value: String): MembershipStatus = MembershipStatus.valueOf(value)
 }

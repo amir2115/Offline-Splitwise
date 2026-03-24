@@ -63,12 +63,20 @@ data class AppStrings(
     val noSettlementsTitle: String,
     val noSettlementsSubtitle: String,
     val membersOfGroupPrefix: String,
+    val invitesTitle: String,
+    val noInvitesTitle: String,
+    val noInvitesSubtitle: String,
+    val acceptInvite: String,
+    val rejectInvite: String,
+    val pendingInviteLabel: String,
     val addMember: String,
     val editMember: String,
     val memberPlaceholder: String,
     val saveMember: String,
     val noMembersTitle: String,
     val noMembersSubtitle: String,
+    val invalidUsernameSyncTitle: String,
+    val invalidUsernameSyncSubtitle: String,
     val addExpenseTitle: String,
     val editExpenseTitle: String,
     val expenseHeroTitle: String,
@@ -149,31 +157,31 @@ data class AppStrings(
     val darkLabel: String,
 ) {
     fun memberSince(date: String): String =
-        if (appTitle == "Offline Splitwise") "Member since $date" else "عضو از $date"
+        if (appTitle == "Splitwise") "Member since $date" else "عضو از $date"
 
     fun paymentSuggestion(from: String, to: String): String =
-        if (appTitle == "Offline Splitwise") "$from should pay $to" else "$from باید به $to پرداخت کند"
+        if (appTitle == "Splitwise") "$from should pay $to" else "$from باید به $to پرداخت کند"
 
     fun payersSummary(names: String): String =
-        if (appTitle == "Offline Splitwise") "Payers: $names" else "پرداخت‌کننده‌ها: $names"
+        if (appTitle == "Splitwise") "Payers: $names" else "پرداخت‌کننده‌ها: $names"
 
     fun settlementSummary(from: String, to: String): String =
-        if (appTitle == "Offline Splitwise") "$from paid $to" else "$from به $to"
+        if (appTitle == "Splitwise") "$from paid $to" else "$from به $to"
 
     fun settlementRecommendation(from: String, to: String, amount: String): String =
-        if (appTitle == "Offline Splitwise") "$from should pay $to $amount." else "$from باید $amount به $to پرداخت کند."
+        if (appTitle == "Splitwise") "$from should pay $to $amount." else "$from باید $amount به $to پرداخت کند."
 
     fun membersOfGroup(groupName: String): String =
-        if (appTitle == "Offline Splitwise") "$membersOfGroupPrefix $groupName" else "$membersOfGroupPrefix $groupName"
+        if (appTitle == "Splitwise") "$membersOfGroupPrefix $groupName" else "$membersOfGroupPrefix $groupName"
 
     fun balancesOfGroup(groupName: String): String =
-        if (appTitle == "Offline Splitwise") "$balancesPrefix $groupName" else "$balancesPrefix $groupName"
+        if (appTitle == "Splitwise") "$balancesPrefix $groupName" else "$balancesPrefix $groupName"
 
     fun memberFallback(memberId: String): String =
-        if (appTitle == "Offline Splitwise") "Member $memberId" else "کاربر $memberId"
+        if (appTitle == "Splitwise") "Member $memberId" else "کاربر $memberId"
 
     fun lastSyncLabel(value: String): String =
-        if (appTitle == "Offline Splitwise") "$lastSyncPrefix $value" else "$lastSyncPrefix $value"
+        if (appTitle == "Splitwise") "$lastSyncPrefix $value" else "$lastSyncPrefix $value"
 
     fun expenseFormTitle(isEdit: Boolean): String = if (isEdit) editExpenseTitle else addExpenseTitle
     fun expenseFormAction(isEdit: Boolean): String = if (isEdit) saveExpenseChanges else saveExpense
@@ -188,25 +196,25 @@ data class AppStrings(
 
     fun message(key: MessageKey?): String? = when (key) {
         null -> null
-        MessageKey.EXPENSE_TOTAL_POSITIVE -> if (appTitle == "Offline Splitwise") "Total amount must be greater than zero." else "مبلغ کل باید بیشتر از صفر باشد."
-        MessageKey.EXPENSE_AT_LEAST_ONE_PAYER -> if (appTitle == "Offline Splitwise") "At least one payer is required." else "حداقل یک پرداخت‌کننده لازم است."
-        MessageKey.EXPENSE_AT_LEAST_ONE_SHARE -> if (appTitle == "Offline Splitwise") "Select at least one participant." else "حداقل یک نفر باید در تقسیم حضور داشته باشد."
-        MessageKey.EXPENSE_NEGATIVE_VALUES -> if (appTitle == "Offline Splitwise") "Negative amounts are not allowed." else "مقادیر منفی مجاز نیستند."
-        MessageKey.EXPENSE_PAYER_TOTAL_MISMATCH -> if (appTitle == "Offline Splitwise") "Payer totals must match the full amount." else "جمع پرداخت‌کننده‌ها باید با مبلغ کل برابر باشد."
-        MessageKey.EXPENSE_SHARE_TOTAL_MISMATCH -> if (appTitle == "Offline Splitwise") "Shares must match the full amount." else "جمع سهم‌ها باید با مبلغ کل برابر باشد."
-        MessageKey.EXPENSE_TITLE_REQUIRED -> if (appTitle == "Offline Splitwise") "Enter an expense title." else "عنوان خرج را وارد کنید."
-        MessageKey.EXPENSE_AMOUNT_TOO_LARGE -> if (appTitle == "Offline Splitwise") "Entered amount is too large." else "عدد واردشده بیش از حد بزرگ است."
-        MessageKey.EXPENSE_SAVED -> if (appTitle == "Offline Splitwise") "Expense saved." else "خرج ذخیره شد."
-        MessageKey.SETTLEMENT_SELECT_TWO_MEMBERS -> if (appTitle == "Offline Splitwise") "Select two members." else "دو نفر را انتخاب کنید."
-        MessageKey.SETTLEMENT_MEMBERS_MUST_DIFFER -> if (appTitle == "Offline Splitwise") "Payer and receiver must be different." else "پرداخت‌کننده و دریافت‌کننده باید متفاوت باشند."
-        MessageKey.SETTLEMENT_AMOUNT_POSITIVE -> if (appTitle == "Offline Splitwise") "Settlement amount must be greater than zero." else "مبلغ تسویه باید بیشتر از صفر باشد."
-        MessageKey.SETTLEMENT_AMOUNT_TOO_LARGE -> if (appTitle == "Offline Splitwise") "Settlement amount is too large." else "مبلغ تسویه بیش از حد بزرگ است."
-        MessageKey.SETTLEMENT_SAVED -> if (appTitle == "Offline Splitwise") "Settlement saved." else "تسویه ذخیره شد."
+        MessageKey.EXPENSE_TOTAL_POSITIVE -> if (appTitle == "Splitwise") "Total amount must be greater than zero." else "مبلغ کل باید بیشتر از صفر باشد."
+        MessageKey.EXPENSE_AT_LEAST_ONE_PAYER -> if (appTitle == "Splitwise") "At least one payer is required." else "حداقل یک پرداخت‌کننده لازم است."
+        MessageKey.EXPENSE_AT_LEAST_ONE_SHARE -> if (appTitle == "Splitwise") "Select at least one participant." else "حداقل یک نفر باید در تقسیم حضور داشته باشد."
+        MessageKey.EXPENSE_NEGATIVE_VALUES -> if (appTitle == "Splitwise") "Negative amounts are not allowed." else "مقادیر منفی مجاز نیستند."
+        MessageKey.EXPENSE_PAYER_TOTAL_MISMATCH -> if (appTitle == "Splitwise") "Payer totals must match the full amount." else "جمع پرداخت‌کننده‌ها باید با مبلغ کل برابر باشد."
+        MessageKey.EXPENSE_SHARE_TOTAL_MISMATCH -> if (appTitle == "Splitwise") "Shares must match the full amount." else "جمع سهم‌ها باید با مبلغ کل برابر باشد."
+        MessageKey.EXPENSE_TITLE_REQUIRED -> if (appTitle == "Splitwise") "Enter an expense title." else "عنوان خرج را وارد کنید."
+        MessageKey.EXPENSE_AMOUNT_TOO_LARGE -> if (appTitle == "Splitwise") "Entered amount is too large." else "عدد واردشده بیش از حد بزرگ است."
+        MessageKey.EXPENSE_SAVED -> if (appTitle == "Splitwise") "Expense saved." else "خرج ذخیره شد."
+        MessageKey.SETTLEMENT_SELECT_TWO_MEMBERS -> if (appTitle == "Splitwise") "Select two members." else "دو نفر را انتخاب کنید."
+        MessageKey.SETTLEMENT_MEMBERS_MUST_DIFFER -> if (appTitle == "Splitwise") "Payer and receiver must be different." else "پرداخت‌کننده و دریافت‌کننده باید متفاوت باشند."
+        MessageKey.SETTLEMENT_AMOUNT_POSITIVE -> if (appTitle == "Splitwise") "Settlement amount must be greater than zero." else "مبلغ تسویه باید بیشتر از صفر باشد."
+        MessageKey.SETTLEMENT_AMOUNT_TOO_LARGE -> if (appTitle == "Splitwise") "Settlement amount is too large." else "مبلغ تسویه بیش از حد بزرگ است."
+        MessageKey.SETTLEMENT_SAVED -> if (appTitle == "Splitwise") "Settlement saved." else "تسویه ذخیره شد."
     }
 }
 
 private val faStrings = AppStrings(
-    appTitle = "خرج‌یار آفلاین",
+    appTitle = "دنگینو",
     authHeroTitle = "همگام با اکانت، آماده برای آفلاین",
     authHeroSubtitle = "وارد شو تا داده‌ها با سرور سینک شوند، یا بدون حساب به‌صورت محلی ادامه بده.",
     authLoginTitle = "ورود به حساب",
@@ -263,12 +271,20 @@ private val faStrings = AppStrings(
     noSettlementsTitle = "تسویه‌ای ثبت نشده",
     noSettlementsSubtitle = "وقتی کسی بدهی‌اش را داد، از اینجا ثبتش کن.",
     membersOfGroupPrefix = "اعضای",
+    invitesTitle = "دعوت‌نامه‌ها",
+    noInvitesTitle = "دعوت‌نامه‌ای نداری",
+    noInvitesSubtitle = "وقتی کسی تو را به گروهی دعوت کند، اینجا دیده می‌شود.",
+    acceptInvite = "قبول",
+    rejectInvite = "رد",
+    pendingInviteLabel = "در انتظار تایید",
     addMember = "افزودن عضو",
     editMember = "ویرایش عضو",
-    memberPlaceholder = "نام عضو",
+    memberPlaceholder = "نام کاربری عضو",
     saveMember = "ثبت عضو",
     noMembersTitle = "هیچ عضوی ثبت نشده",
     noMembersSubtitle = "برای ثبت خرج حداقل یک عضو نیاز داری.",
+    invalidUsernameSyncTitle = "همگام‌سازی به خاطر نام کاربری نامعتبر متوقف شد",
+    invalidUsernameSyncSubtitle = "این نام‌های کاربری روی سرور وجود ندارند. آن‌ها را ویرایش کن و دوباره سینک بزن.",
     addExpenseTitle = "خرج جدید",
     editExpenseTitle = "ویرایش خرج",
     expenseHeroTitle = "خرج را دقیق ثبت کن",
@@ -350,7 +366,7 @@ private val faStrings = AppStrings(
 )
 
 private val enStrings = AppStrings(
-    appTitle = "Offline Splitwise",
+    appTitle = "Splitwise",
     authHeroTitle = "Sign in for sync, keep working offline",
     authHeroSubtitle = "Use your account to sync with the server, or continue locally without signing in.",
     authLoginTitle = "Sign in",
@@ -407,12 +423,20 @@ private val enStrings = AppStrings(
     noSettlementsTitle = "No settlements yet",
     noSettlementsSubtitle = "Record a payment here whenever someone settles up.",
     membersOfGroupPrefix = "Members of",
+    invitesTitle = "Invites",
+    noInvitesTitle = "No pending invites",
+    noInvitesSubtitle = "Incoming group invites show up here.",
+    acceptInvite = "Accept",
+    rejectInvite = "Reject",
+    pendingInviteLabel = "Pending",
     addMember = "Add member",
     editMember = "Edit member",
-    memberPlaceholder = "Member name",
+    memberPlaceholder = "Member username",
     saveMember = "Save member",
     noMembersTitle = "No members yet",
     noMembersSubtitle = "You need at least one member before adding expenses.",
+    invalidUsernameSyncTitle = "Sync blocked by invalid usernames",
+    invalidUsernameSyncSubtitle = "These usernames do not exist on the server. Edit them and sync again.",
     addExpenseTitle = "New expense",
     editExpenseTitle = "Edit expense",
     expenseHeroTitle = "Capture the expense clearly",

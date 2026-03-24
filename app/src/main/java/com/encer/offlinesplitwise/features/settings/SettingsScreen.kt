@@ -3,6 +3,7 @@ package com.encer.offlinesplitwise.features.settings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,6 +35,7 @@ import com.encer.offlinesplitwise.ui.components.appPlainCardColors
 import com.encer.offlinesplitwise.ui.localization.appStrings
 import com.encer.offlinesplitwise.ui.formatting.formatDate
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     currentLanguage: AppLanguage,

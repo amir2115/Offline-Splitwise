@@ -2,9 +2,10 @@ package com.encer.offlinesplitwise.core.di
 
 import com.encer.offlinesplitwise.BuildConfig
 import com.encer.offlinesplitwise.data.remote.api.AuthApi
-import com.encer.offlinesplitwise.data.remote.network.AuthInterceptor
+import com.encer.offlinesplitwise.data.remote.api.GroupInvitesApi
 import com.encer.offlinesplitwise.data.remote.api.HealthApi
 import com.encer.offlinesplitwise.data.remote.api.SyncApi
+import com.encer.offlinesplitwise.data.remote.network.AuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,6 +13,7 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -31,6 +33,7 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
+        @NetworkInspectionInterceptor networkInspectionInterceptor: Interceptor,
     ): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BASIC
@@ -38,6 +41,7 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
+            .addInterceptor(networkInspectionInterceptor)
             .build()
     }
 
@@ -61,6 +65,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideSyncApi(retrofit: Retrofit): SyncApi = retrofit.create(SyncApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideGroupInvitesApi(retrofit: Retrofit): GroupInvitesApi = retrofit.create(GroupInvitesApi::class.java)
 
     @Provides
     @Singleton

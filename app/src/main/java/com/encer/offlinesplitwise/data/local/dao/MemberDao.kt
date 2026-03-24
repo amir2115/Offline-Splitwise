@@ -1,9 +1,8 @@
 package com.encer.offlinesplitwise.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import com.encer.offlinesplitwise.data.local.entity.*
 import kotlinx.coroutines.flow.Flow
 
@@ -27,10 +26,10 @@ interface MemberDao {
     @Query("SELECT * FROM members WHERE groupId = :groupId AND userId = :userId AND deletedAt IS NULL LIMIT 1")
     suspend fun getByGroupAndUserId(groupId: String, userId: String): MemberEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsert(member: MemberEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsertAll(members: List<MemberEntity>)
 
     @Query("DELETE FROM members WHERE id = :memberId")
@@ -38,4 +37,7 @@ interface MemberDao {
 
     @Query("DELETE FROM members WHERE id IN (:memberIds)")
     suspend fun hardDeleteByIds(memberIds: List<String>)
+
+    @Query("DELETE FROM members WHERE groupId = :groupId AND userId = :userId AND id != :keepId")
+    suspend fun hardDeleteByGroupAndUserIdExceptId(groupId: String, userId: String, keepId: String)
 }

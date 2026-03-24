@@ -2,7 +2,15 @@
 
 package com.encer.offlinesplitwise.features.groups
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +20,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -21,10 +31,13 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.MailOutline
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -38,11 +51,15 @@ import com.encer.offlinesplitwise.ui.components.EmptyStateCard
 import com.encer.offlinesplitwise.ui.components.HeroCard
 import com.encer.offlinesplitwise.ui.components.NameDialog
 import com.encer.offlinesplitwise.ui.components.appCardColors
+import com.encer.offlinesplitwise.ui.components.appOutlinedButtonColors
 import com.encer.offlinesplitwise.ui.components.appTopBarColors
 import com.encer.offlinesplitwise.ui.formatting.formatDate
 import com.encer.offlinesplitwise.ui.localization.appStrings
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -71,7 +88,8 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 18.dp),
+                .padding(horizontal = 16.dp, vertical = 18.dp)
+                .animateContentSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
@@ -81,9 +99,126 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
                     icon = { Icon(Icons.Rounded.Groups, contentDescription = null) }
                 )
             }
+            item {
+                Text(
+                    strings.invitesTitle,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            if (uiState.isLoading && uiState.invites.isEmpty()) {
+                items(2) {
+                    InviteSkeletonCard(
+                        modifier = Modifier.animateContentSize()
+                    )
+                }
+            }
+            if (uiState.invites.isEmpty() && !uiState.isLoading) {
+                item {
+                    EmptyStateCard(strings.noInvitesTitle, strings.noInvitesSubtitle)
+                }
+            }
+            items(uiState.invites, key = { it.id }) { invite ->
+                ElevatedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize(),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = appCardColors(),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.14f), CircleShape)
+                                    .border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.22f),
+                                        shape = CircleShape
+                                    )
+                                    .padding(12.dp)
+                            ) {
+                                Icon(
+                                    Icons.Rounded.MailOutline,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    invite.groupName,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    "@${invite.inviterUsername}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.14f))
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { viewModel.rejectInvite(invite.id) },
+                                modifier = Modifier.weight(1f),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                                ),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.08f),
+                                    contentColor = MaterialTheme.colorScheme.error
+                                )
+                            ) {
+                                Text(strings.rejectInvite, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
+                            }
+                            OutlinedButton(
+                                onClick = { viewModel.acceptInvite(invite.id) },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                                )
+                            ) {
+                                Text(strings.acceptInvite, style = MaterialTheme.typography.labelLarge)
+                            }
+                        }
+                    }
+                }
+            }
+            if (uiState.isLoading && uiState.groups.isEmpty()) {
+                items(3) {
+                    GroupSkeletonCard(
+                        modifier = Modifier.animateContentSize()
+                    )
+                }
+            }
             items(uiState.groups, key = { it.id }) { group ->
                 ElevatedCard(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize(),
                     shape = RoundedCornerShape(28.dp),
                     colors = appCardColors(),
                     onClick = { onOpenGroup(group.id) }
@@ -112,7 +247,7 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
                     }
                 }
             }
-            if (uiState.groups.isEmpty()) {
+            if (uiState.groups.isEmpty() && !uiState.isLoading) {
                 item {
                     EmptyStateCard(strings.noGroupsTitle, strings.noGroupsSubtitle)
                 }
@@ -151,4 +286,93 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
             )
         }
     }
+}
+
+@Composable
+private fun InviteSkeletonCard(modifier: Modifier = Modifier) {
+    ElevatedCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = appCardColors(),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                ShimmerBlock(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape),
+                    shape = CircleShape
+                )
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ShimmerBlock(modifier = Modifier.fillMaxWidth(0.42f).height(20.dp))
+                    ShimmerBlock(modifier = Modifier.fillMaxWidth(0.28f).height(14.dp))
+                }
+            }
+            ShimmerBlock(modifier = Modifier.fillMaxWidth().height(1.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ShimmerBlock(modifier = Modifier.weight(1f).height(42.dp))
+                ShimmerBlock(modifier = Modifier.weight(1f).height(42.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupSkeletonCard(modifier: Modifier = Modifier) {
+    ElevatedCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = appCardColors(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ShimmerBlock(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape),
+                shape = CircleShape
+            )
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ShimmerBlock(modifier = Modifier.fillMaxWidth(0.46f).height(20.dp))
+                ShimmerBlock(modifier = Modifier.fillMaxWidth(0.22f).height(14.dp))
+            }
+            ShimmerBlock(modifier = Modifier.width(22.dp).height(22.dp))
+            ShimmerBlock(modifier = Modifier.width(22.dp).height(22.dp))
+        }
+    }
+}
+
+@Composable
+private fun ShimmerBlock(
+    modifier: Modifier,
+    shape: Shape = RoundedCornerShape(14.dp),
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "groups_shimmer")
+    val shift = infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1100, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "groups_shimmer_shift"
+    )
+    val base = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.44f)
+    val highlight = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(base, highlight, base),
+                    start = androidx.compose.ui.geometry.Offset.Zero,
+                    end = androidx.compose.ui.geometry.Offset(600f * shift.value, 220f * shift.value)
+                )
+            )
+    )
 }
