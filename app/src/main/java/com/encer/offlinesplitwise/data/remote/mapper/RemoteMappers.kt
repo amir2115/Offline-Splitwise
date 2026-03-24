@@ -9,6 +9,7 @@ import com.encer.offlinesplitwise.data.local.entity.SettlementEntity
 import com.encer.offlinesplitwise.data.local.entity.SyncState
 import com.encer.offlinesplitwise.data.remote.model.*
 import com.encer.offlinesplitwise.data.remote.network.* 
+import com.encer.offlinesplitwise.domain.model.MembershipStatus
 import com.encer.offlinesplitwise.domain.model.SplitType
 
 fun RemoteGroup.toEntity() = GroupEntity(
@@ -24,12 +25,13 @@ fun RemoteGroup.toEntity() = GroupEntity(
 fun RemoteMember.toEntity() = MemberEntity(
     id = id,
     groupId = groupId,
-    name = name,
+    username = username,
     createdAt = parseIsoInstant(createdAt),
     updatedAt = parseIsoInstant(updatedAt),
     deletedAt = deletedAt?.let(::parseIsoInstant),
     isArchived = isArchived,
     userId = userId,
+    membershipStatus = runCatching { MembershipStatus.valueOf(membershipStatus) }.getOrDefault(MembershipStatus.ACTIVE),
     syncState = SyncState.SYNCED,
 )
 
@@ -80,7 +82,7 @@ fun GroupEntity.toRemotePayload() = RemoteGroupPayload(
 fun MemberEntity.toRemotePayload() = RemoteMemberPayload(
     id = id,
     groupId = groupId,
-    name = name,
+    username = username,
     isArchived = isArchived,
     createdAt = formatIsoInstant(createdAt),
     updatedAt = formatIsoInstant(updatedAt),

@@ -3,6 +3,7 @@ package com.encer.offlinesplitwise.features.expense_editor
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -74,7 +75,7 @@ import com.encer.offlinesplitwise.ui.formatting.parseAmountInput
 import com.encer.offlinesplitwise.ui.formatting.parseAmountInputOrNull
 import com.encer.offlinesplitwise.ui.localization.appStrings
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ExpenseEditorScreen(
     groupId: String,
@@ -235,6 +236,7 @@ fun ExpenseEditorScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MemberEditorCard(
     member: MemberDraftUi,
@@ -253,7 +255,7 @@ private fun MemberEditorCard(
     ElevatedCard(shape = RoundedCornerShape(24.dp), colors = appCardColors()) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(member.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Text("@${member.username}", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Switch(
                     checked = member.includedInSplit,
                     onCheckedChange = onToggleIncluded,

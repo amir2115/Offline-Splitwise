@@ -1,3 +1,6 @@
-<inset xmlns:android="http://schemas.android.com/apk/res/android"
-    android:inset="32dp"
-    android:drawable="@drawable/ic_brand_mark" />
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_splash_brand_vector">
+    <target
+        android:name="brand_group"
+        android:animation="@animator/ic_splash_brand_enter" />
+</animated-vector>

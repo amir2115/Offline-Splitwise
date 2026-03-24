@@ -46,9 +46,9 @@ class ExpenseEditorViewModel @Inject constructor(
                 _uiState.update { current ->
                     current.copy(
                         members = members.map { member ->
-                            previous[member.id]?.copy(name = member.name) ?: MemberDraftUi(
+                            previous[member.id]?.copy(username = member.username) ?: MemberDraftUi(
                                 memberId = member.id,
-                                name = member.name,
+                                username = member.username,
                                 includedInSplit = shareMap.containsKey(member.id) || expenseId == null,
                                 payerAmountInput = payerMap[member.id]?.amount?.takeIf { it > 0 }?.toString().orEmpty(),
                                 exactShareInput = shareMap[member.id]?.amount?.takeIf { it > 0 }?.toString().orEmpty()

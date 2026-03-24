@@ -11,6 +11,7 @@ import kotlinx.coroutines.sync.withLock
 class ApiClient @Inject constructor(
     private val authRemoteDataSource: AuthRemoteDataSource,
     private val syncRemoteDataSource: SyncRemoteDataSource,
+    private val groupInvitesRemoteDataSource: GroupInvitesRemoteDataSource,
     private val healthRemoteDataSource: HealthRemoteDataSource,
     private val sessionRepository: SessionRepository,
 ) {
@@ -29,6 +30,15 @@ class ApiClient @Inject constructor(
 
     suspend fun importData(request: SyncImportRequest): SyncResponse =
         executeAuthenticated { syncRemoteDataSource.importData(request) }
+
+    suspend fun listGroupInvites(status: String = "pending"): List<RemoteGroupInvite> =
+        executeAuthenticated { groupInvitesRemoteDataSource.list(status) }
+
+    suspend fun acceptGroupInvite(inviteId: String): RemoteGroupInvite =
+        executeAuthenticated { groupInvitesRemoteDataSource.accept(inviteId) }
+
+    suspend fun rejectGroupInvite(inviteId: String): RemoteGroupInvite =
+        executeAuthenticated { groupInvitesRemoteDataSource.reject(inviteId) }
 
     suspend fun health(): HealthCheckResponse = healthRemoteDataSource.health()
 

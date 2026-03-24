@@ -1,16 +1,29 @@
 package com.encer.offlinesplitwise.features.settings
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Logout
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.PersonOutline
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.WifiOff
@@ -24,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.encer.offlinesplitwise.data.preferences.AppLanguage
 import com.encer.offlinesplitwise.data.preferences.AppThemeMode
@@ -34,6 +48,7 @@ import com.encer.offlinesplitwise.ui.components.appPlainCardColors
 import com.encer.offlinesplitwise.ui.localization.appStrings
 import com.encer.offlinesplitwise.ui.formatting.formatDate
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     currentLanguage: AppLanguage,
@@ -63,64 +78,78 @@ fun SettingsScreen(
             subtitle = strings.settingsHeroSubtitle,
             icon = { Icon(Icons.Rounded.Settings, contentDescription = null) }
         )
-        Card(
-            shape = RoundedCornerShape(28.dp),
-            colors = appPlainCardColors(),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
-        ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text(strings.accountTitle, style = MaterialTheme.typography.titleLarge)
-                Text(
-                    text = if (sessionUsername == null) {
-                        strings.accountSubtitleGuest
-                    } else {
-                        sessionName?.takeIf { it.isNotBlank() }?.let { "$it (@$sessionUsername)" } ?: "@$sessionUsername"
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+        SettingsSectionCard {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                SettingsSectionHeader(
+                    title = strings.accountTitle,
+                    subtitle = if (sessionUsername == null) strings.accountSubtitleGuest else strings.accountSubtitleSignedIn,
+                    icon = Icons.Rounded.PersonOutline,
                 )
                 if (sessionUsername == null) {
-                    OutlinedButton(onClick = onSignIn, colors = appOutlinedButtonColors()) {
+                    SettingsInfoCard(
+                        headline = strings.accountTitle,
+                        supporting = strings.accountSubtitleGuest,
+                    )
+                    OutlinedButton(
+                        onClick = onSignIn,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = appOutlinedButtonColors()
+                    ) {
                         Text(strings.signInLabel, style = MaterialTheme.typography.labelLarge)
                     }
                 } else {
+                    SettingsInfoCard(
+                        headline = sessionName?.takeIf { it.isNotBlank() } ?: "@$sessionUsername",
+                        supporting = "@$sessionUsername",
+                    )
                     OutlinedButton(
                         onClick = onLogout,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.7f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.08f),
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
                     ) {
+                        Icon(Icons.Rounded.Logout, contentDescription = null)
+                        Spacer(Modifier.size(8.dp))
                         Text(strings.logoutLabel, style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
         }
-        Card(
-            shape = RoundedCornerShape(28.dp),
-            colors = appPlainCardColors(),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
-        ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text(strings.syncTitle, style = MaterialTheme.typography.titleLarge)
-                Text(
-                    text = when {
-                        !canSync -> strings.syncLoginRequired
-                        isOnline -> strings.syncOnline
-                        else -> strings.syncOffline
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = when {
-                        !canSync -> MaterialTheme.colorScheme.onSurfaceVariant
-                        isOnline -> MaterialTheme.colorScheme.primary
-                        else -> MaterialTheme.colorScheme.error
+        SettingsSectionCard {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                SettingsSectionHeader(
+                    title = strings.syncTitle,
+                    subtitle = strings.syncSubtitle,
+                    icon = Icons.Rounded.Sync,
+                    trailing = {
+                        SettingsStatusBadge(
+                            text = when {
+                                !canSync -> strings.signInLabel
+                                isOnline -> strings.syncOnline
+                                else -> strings.syncOffline
+                            },
+                            tone = when {
+                                !canSync -> MaterialTheme.colorScheme.outline
+                                isOnline -> MaterialTheme.colorScheme.primary
+                                else -> MaterialTheme.colorScheme.error
+                            }
+                        )
                     }
                 )
-                Text(
-                    text = lastSyncedAt?.let { strings.lastSyncLabel(formatDate(it)) } ?: strings.notSyncedYet,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                SettingsInfoCard(
+                    headline = lastSyncedAt?.let { strings.lastSyncLabel(formatDate(it)) } ?: strings.notSyncedYet,
+                    supporting = if (canSync) {
+                        if (syncError.isNullOrBlank()) strings.syncSubtitle else if (isOnline) strings.syncServerIssue else strings.syncConnectionIssue
+                    } else {
+                        strings.syncLoginRequired
+                    },
+                    supportingColor = if (canSync && !syncError.isNullOrBlank()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (canSync && !syncError.isNullOrBlank()) {
-                    androidx.compose.foundation.layout.Row(
+                    Row(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -136,18 +165,22 @@ fun SettingsScreen(
                         )
                     }
                 }
-                OutlinedButton(onClick = onSyncNow, colors = appOutlinedButtonColors()) {
-                    Text(strings.syncNow, style = MaterialTheme.typography.labelLarge)
+                OutlinedButton(
+                    onClick = if (canSync) onSyncNow else onSignIn,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = appOutlinedButtonColors()
+                ) {
+                    Text(if (canSync) strings.syncNow else strings.signInLabel, style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
-        Card(
-            shape = RoundedCornerShape(28.dp),
-            colors = appPlainCardColors(),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
-        ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text(strings.languageTitle, style = MaterialTheme.typography.titleLarge)
+        SettingsSectionCard {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                SettingsSectionHeader(
+                    title = strings.languageTitle,
+                    subtitle = strings.languageSubtitle,
+                    icon = Icons.Rounded.Language,
+                )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     FilterChip(
                         selected = currentLanguage == AppLanguage.FA,
@@ -164,13 +197,13 @@ fun SettingsScreen(
                 }
             }
         }
-        Card(
-            shape = RoundedCornerShape(28.dp),
-            colors = appPlainCardColors(),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
-        ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text(strings.themeTitle, style = MaterialTheme.typography.titleLarge)
+        SettingsSectionCard {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                SettingsSectionHeader(
+                    title = strings.themeTitle,
+                    subtitle = strings.themeSubtitle,
+                    icon = Icons.Rounded.Palette,
+                )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     FilterChip(
                         selected = currentTheme == AppThemeMode.LIGHT,
@@ -187,5 +220,91 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SettingsSectionCard(content: @Composable () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = appPlainCardColors(),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun SettingsSectionHeader(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    trailing: @Composable (() -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), CircleShape)
+                .padding(12.dp)
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = MaterialTheme.typography.titleLarge)
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        trailing?.invoke()
+    }
+}
+
+@Composable
+private fun SettingsStatusBadge(
+    text: String,
+    tone: Color,
+) {
+    Box(
+        modifier = Modifier
+            .background(tone.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
+            .border(BorderStroke(1.dp, tone.copy(alpha = 0.2f)), RoundedCornerShape(16.dp))
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+    ) {
+        Text(text, style = MaterialTheme.typography.labelLarge, color = tone)
+    }
+}
+
+@Composable
+private fun SettingsInfoCard(
+    headline: String,
+    supporting: String,
+    supportingColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.42f), RoundedCornerShape(22.dp))
+            .border(
+                BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)),
+                RoundedCornerShape(22.dp)
+            )
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(headline, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        Text(supporting, style = MaterialTheme.typography.bodyMedium, color = supportingColor)
     }
 }

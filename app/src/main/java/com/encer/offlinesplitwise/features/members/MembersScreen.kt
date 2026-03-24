@@ -35,8 +35,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.encer.offlinesplitwise.domain.model.MembershipStatus
 import com.encer.offlinesplitwise.ui.components.EmptyStateCard
 import com.encer.offlinesplitwise.ui.components.NameDialog
 import com.encer.offlinesplitwise.ui.components.appCardColors
@@ -78,6 +80,19 @@ fun MembersScreen(groupId: String, onBack: () -> Unit) {
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (uiState.invalidUsernameMembers.isNotEmpty()) {
+                item {
+                    ElevatedCard(shape = RoundedCornerShape(24.dp), colors = appCardColors()) {
+                        Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(strings.invalidUsernameSyncTitle, style = MaterialTheme.typography.titleMedium)
+                            Text(strings.invalidUsernameSyncSubtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            uiState.invalidUsernameMembers.forEach { issue ->
+                                Text("@${issue.username}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    }
+                }
+            }
             items(uiState.members, key = { it.id }) { member ->
                 ElevatedCard(shape = RoundedCornerShape(24.dp), colors = appCardColors()) {
                     Row(
@@ -92,16 +107,19 @@ fun MembersScreen(groupId: String, onBack: () -> Unit) {
                                 .padding(horizontal = 14.dp, vertical = 10.dp)
                         ) {
                             Text(
-                                member.name.take(1),
+                                member.username.take(1).uppercase(),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.secondary,
-                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                fontWeight = FontWeight.Bold
                             )
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(member.name, style = MaterialTheme.typography.titleMedium)
+                            Text("@${member.username}", style = MaterialTheme.typography.titleMedium)
                             Text(strings.memberSince(formatDate(member.createdAt)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (member.membershipStatus == MembershipStatus.PENDING_INVITE) {
+                                Text(strings.pendingInviteLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+                            }
                         }
                         IconButton(onClick = { editingMemberId = member.id }) {
                             Icon(Icons.Rounded.Edit, contentDescription = strings.edit)
@@ -136,12 +154,12 @@ fun MembersScreen(groupId: String, onBack: () -> Unit) {
         uiState.members.firstOrNull { it.id == memberId }?.let { member ->
             NameDialog(
                 title = strings.editMember,
-                initialValue = member.name,
+                initialValue = member.username,
                 placeholder = strings.memberPlaceholder,
                 confirmLabel = strings.save,
                 onDismiss = { editingMemberId = null },
                 onConfirm = { name ->
-                    viewModel.updateMember(member.copy(name = name))
+                    viewModel.updateMember(member.copy(username = name))
                     editingMemberId = null
                 }
             )

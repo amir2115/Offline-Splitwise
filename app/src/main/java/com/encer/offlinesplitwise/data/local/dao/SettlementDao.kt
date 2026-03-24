@@ -1,9 +1,8 @@
 package com.encer.offlinesplitwise.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import com.encer.offlinesplitwise.data.local.entity.*
 import kotlinx.coroutines.flow.Flow
 
@@ -21,10 +20,10 @@ interface SettlementDao {
     @Query("SELECT * FROM settlements WHERE id = :settlementId LIMIT 1")
     suspend fun getById(settlementId: String): SettlementEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsert(settlement: SettlementEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsertAll(settlements: List<SettlementEntity>)
 
     @Query("DELETE FROM settlements WHERE id = :settlementId")

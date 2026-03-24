@@ -26,7 +26,7 @@ class BalanceCalculator @Inject constructor() {
         return members.map { member ->
             val paid = paidMap.getValue(member.id)
             val owed = owedMap.getValue(member.id)
-            MemberBalance(member.id, member.name, paid, owed, paid - owed)
+            MemberBalance(member.id, member.username, paid, owed, paid - owed)
         }
     }
 

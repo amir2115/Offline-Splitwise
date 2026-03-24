@@ -1,9 +1,8 @@
 package com.encer.offlinesplitwise.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import com.encer.offlinesplitwise.data.local.entity.*
 import kotlinx.coroutines.flow.Flow
 
@@ -21,10 +20,10 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE id = :expenseId LIMIT 1")
     suspend fun getExpenseById(expenseId: String): ExpenseEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsertExpense(expense: ExpenseEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsertExpenses(expenses: List<ExpenseEntity>)
 
     @Query("DELETE FROM expenses WHERE id = :expenseId")

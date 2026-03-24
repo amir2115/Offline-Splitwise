@@ -346,7 +346,7 @@ private fun SettlementMemberPicker(
                     Box(modifier = Modifier.weight(1f)) {
                         SettlementMemberOptionCard(
                             modifier = Modifier.fillMaxWidth(),
-                            name = member.name,
+                            name = "@${member.username}",
                             badge = badge.takeIf { isSelected },
                             selected = isSelected,
                             enabled = true,
