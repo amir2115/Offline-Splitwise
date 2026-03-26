@@ -13,4 +13,5 @@ data class SettlementEditorUiState(
     val note: String = "",
     val message: MessageKey? = null,
     val saved: Boolean = false,
+    val canCreateTransaction: Boolean = true,
 )

@@ -54,7 +54,8 @@ class ExpenseEditorViewModel @Inject constructor(
                                 exactShareInput = shareMap[member.id]?.amount?.takeIf { it > 0 }?.toString().orEmpty()
                             )
                         },
-                        loaded = true
+                        loaded = true,
+                        canCreateTransaction = expenseId != null || members.size >= 2,
                     )
                 }
                 if (expenseId == null && _uiState.value.members.all { !it.includedInSplit }) {
@@ -108,6 +109,7 @@ class ExpenseEditorViewModel @Inject constructor(
 
     fun save() {
         val state = _uiState.value
+        if (!state.canCreateTransaction) return
         val amountInputs = buildList {
             add(state.totalAmountInput)
             state.members.forEach { member ->
@@ -154,6 +156,7 @@ class ExpenseEditorViewModel @Inject constructor(
 
     fun assignFullAmountToPayer(memberId: String) {
         val state = _uiState.value
+        if (!state.canCreateTransaction) return
         val normalizedTotal = normalizeAmountDigits(state.totalAmountInput)
         val parsedTotal = parseAmountInputOrNull(state.totalAmountInput)
         val message = when {
@@ -172,7 +175,11 @@ class ExpenseEditorViewModel @Inject constructor(
     }
 
     fun clearPayerAmount(memberId: String) = _uiState.update { state ->
-        state.copy(members = state.members.map { if (it.memberId == memberId) it.copy(payerAmountInput = "") else it }, message = null)
+        if (!state.canCreateTransaction) {
+            state
+        } else {
+            state.copy(members = state.members.map { if (it.memberId == memberId) it.copy(payerAmountInput = "") else it }, message = null)
+        }
     }
 
     fun delete() {

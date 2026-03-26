@@ -200,6 +200,12 @@ fun ExpenseEditorScreen(
                     isError = true
                 )
             }
+            AppAnimatedVisibility(visible = !uiState.canCreateTransaction) {
+                AppInlineMessageCard(
+                    text = strings.needSecondMemberMessage,
+                    isError = false
+                )
+            }
             AppAnimatedSection(visible = contentVisible, enter = appSectionEnter(delayMillis = 100)) {
                 SectionHeader(strings.membersAndPayersTitle)
             }
@@ -223,7 +229,8 @@ fun ExpenseEditorScreen(
                     onClick = { viewModel.save() },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(22.dp),
-                    colors = appPrimaryButtonColors()
+                    colors = appPrimaryButtonColors(),
+                    enabled = uiState.canCreateTransaction
                 ) {
                     Text(strings.expenseFormAction(expenseId != null), style = MaterialTheme.typography.labelLarge)
                 }

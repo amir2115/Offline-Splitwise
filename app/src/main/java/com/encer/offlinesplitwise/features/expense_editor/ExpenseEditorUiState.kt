@@ -13,4 +13,5 @@ data class ExpenseEditorUiState(
     val message: MessageKey? = null,
     val savedExpenseId: String? = null,
     val loaded: Boolean = false,
+    val canCreateTransaction: Boolean = true,
 )

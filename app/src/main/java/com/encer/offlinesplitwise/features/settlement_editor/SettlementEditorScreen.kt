@@ -142,6 +142,12 @@ fun SettlementEditorScreen(
                     isError = true
                 )
             }
+            AppAnimatedVisibility(visible = !uiState.canCreateTransaction) {
+                AppInlineMessageCard(
+                    text = strings.needSecondMemberMessage,
+                    isError = false
+                )
+            }
             AppAnimatedSection(visible = contentVisible, enter = appSectionEnter(delayMillis = 60)) {
                 ElevatedCard(shape = RoundedCornerShape(28.dp), colors = appCardColors()) {
                     Column(
@@ -225,7 +231,8 @@ fun SettlementEditorScreen(
                     onClick = { viewModel.save() },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(22.dp),
-                    colors = appPrimaryButtonColors()
+                    colors = appPrimaryButtonColors(),
+                    enabled = uiState.canCreateTransaction
                 ) {
                     Text(strings.settlementFormAction(settlementId != null), style = MaterialTheme.typography.labelLarge)
                 }

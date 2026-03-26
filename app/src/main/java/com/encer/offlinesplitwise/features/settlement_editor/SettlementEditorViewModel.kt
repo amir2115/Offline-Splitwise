@@ -59,7 +59,8 @@ class SettlementEditorViewModel @Inject constructor(
                         members = members,
                         fromMemberId = preferredPair.first,
                         toMemberId = preferredPair.second,
-                        suggestedAmount = computeSuggestedAmount(preferredPair.first, preferredPair.second, latestBalances)
+                        suggestedAmount = computeSuggestedAmount(preferredPair.first, preferredPair.second, latestBalances),
+                        canCreateTransaction = settlementId != null || members.size >= 2,
                     )
                 }
             }
@@ -87,24 +88,33 @@ class SettlementEditorViewModel @Inject constructor(
     }
 
     fun setFromMember(memberId: String) = _uiState.update { current ->
+        if (!current.canCreateTransaction) return@update current
         userAdjustedSelection = true
         val nextToMemberId = if (current.toMemberId == memberId) current.fromMemberId else current.toMemberId
         current.copy(fromMemberId = memberId, toMemberId = nextToMemberId, suggestedAmount = computeSuggestedAmount(memberId, nextToMemberId, latestBalances), message = null)
     }
 
     fun setToMember(memberId: String) = _uiState.update { current ->
+        if (!current.canCreateTransaction) return@update current
         userAdjustedSelection = true
         val nextFromMemberId = if (current.fromMemberId == memberId) current.toMemberId else current.fromMemberId
         current.copy(fromMemberId = nextFromMemberId, toMemberId = memberId, suggestedAmount = computeSuggestedAmount(nextFromMemberId, memberId, latestBalances), message = null)
     }
 
-    fun setAmount(input: String) = _uiState.update { it.copy(amountInput = input.filter { ch -> ch.isDigit() || ch in '۰'..'۹' }, message = null) }
-    fun setSuggestedAmount() = _uiState.update { current -> current.suggestedAmount?.let { current.copy(amountInput = it.toString(), message = null) } ?: current }
-    fun setNote(note: String) = _uiState.update { it.copy(note = note, message = null) }
+    fun setAmount(input: String) = _uiState.update { current ->
+        if (!current.canCreateTransaction) current else current.copy(amountInput = input.filter { ch -> ch.isDigit() || ch in '۰'..'۹' }, message = null)
+    }
+    fun setSuggestedAmount() = _uiState.update { current ->
+        if (!current.canCreateTransaction) current else current.suggestedAmount?.let { current.copy(amountInput = it.toString(), message = null) } ?: current
+    }
+    fun setNote(note: String) = _uiState.update { current ->
+        if (!current.canCreateTransaction) current else current.copy(note = note, message = null)
+    }
     fun clearMessage() = _uiState.update { it.copy(message = null) }
 
     fun save() {
         val state = _uiState.value
+        if (!state.canCreateTransaction) return
         val amount = parseAmountInputOrNull(state.amountInput)
         val resolvedAmount = amount ?: 0
         when {
