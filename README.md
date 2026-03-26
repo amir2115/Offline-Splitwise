@@ -184,11 +184,50 @@ Relevant files:
 - [app/build.gradle.kts](app/build.gradle.kts)
 - [proguard-rules.pro](app/proguard-rules.pro)
 
+Release configuration can be injected with Gradle properties or environment variables:
+
+- `OFFLINE_SPLITWISE_VERSION_CODE`
+- `OFFLINE_SPLITWISE_VERSION_NAME`
+- `OFFLINE_SPLITWISE_API_BASE_URL`
+- `OFFLINE_SPLITWISE_RELEASE_STORE_FILE`
+- `OFFLINE_SPLITWISE_RELEASE_STORE_PASSWORD`
+- `OFFLINE_SPLITWISE_RELEASE_KEY_ALIAS`
+- `OFFLINE_SPLITWISE_RELEASE_KEY_PASSWORD`
+
+Example signed release build:
+
+```bash
+./gradlew :app:assembleRelease \
+  -POFFLINE_SPLITWISE_VERSION_CODE=42 \
+  -POFFLINE_SPLITWISE_VERSION_NAME=1.4.0 \
+  -POFFLINE_SPLITWISE_RELEASE_STORE_FILE=/absolute/path/release.keystore \
+  -POFFLINE_SPLITWISE_RELEASE_STORE_PASSWORD=changeit \
+  -POFFLINE_SPLITWISE_RELEASE_KEY_ALIAS=release \
+  -POFFLINE_SPLITWISE_RELEASE_KEY_PASSWORD=changeit
+```
+
+If signing properties are missing, Gradle still builds an unsigned release artifact.
+
 Unsigned release output:
 
 ```text
 app/build/outputs/apk/release/app-release-unsigned.apk
 ```
+
+Signed release output:
+
+```text
+app/build/outputs/apk/release/app-release.apk
+```
+
+Suggested release checklist:
+
+1. Set the final `OFFLINE_SPLITWISE_VERSION_CODE` and `OFFLINE_SPLITWISE_VERSION_NAME`.
+2. Point `OFFLINE_SPLITWISE_API_BASE_URL` at production.
+3. Provide release keystore properties from CI secrets or local shell env.
+4. Run `./gradlew testDebugUnitTest`.
+5. Run `./gradlew :app:assembleRelease`.
+6. Upload the signed APK or AAB that matches the store channel requirements.
 
 ## UI settings
 
@@ -211,5 +250,5 @@ These preferences are stored locally and restored when the app is opened again.
 - `applicationId`: `com.encer.offlinesplitwise`
 - `minSdk`: `24`
 - `targetSdk`: `36`
-- `versionCode`: `1`
-- `versionName`: `1.0`
+- `versionCode`: configurable with `OFFLINE_SPLITWISE_VERSION_CODE` (default `1`)
+- `versionName`: configurable with `OFFLINE_SPLITWISE_VERSION_NAME` (default `1.0`)

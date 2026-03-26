@@ -7,6 +7,31 @@ plugins {
     alias(libs.plugins.hilt.android)
 }
 
+fun propertyOrEnv(name: String): String? = providers.gradleProperty(name)
+    .orElse(providers.environmentVariable(name))
+    .orNull
+    ?.takeIf { it.isNotBlank() }
+
+fun propertyOrEnv(name: String, defaultValue: String): String = propertyOrEnv(name) ?: defaultValue
+
+fun intPropertyOrEnv(name: String, defaultValue: Int): Int =
+    propertyOrEnv(name)?.toIntOrNull() ?: defaultValue
+
+val releaseVersionCode = intPropertyOrEnv("OFFLINE_SPLITWISE_VERSION_CODE", 1)
+val releaseVersionName = propertyOrEnv("OFFLINE_SPLITWISE_VERSION_NAME", "1.0")
+val apiBaseUrl = propertyOrEnv("OFFLINE_SPLITWISE_API_BASE_URL", "https://api.splitwise.ir/api/v1")
+
+val releaseStoreFile = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_STORE_FILE")
+val releaseStorePassword = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_KEY_ALIAS")
+val releaseKeyPassword = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_KEY_PASSWORD")
+val hasReleaseSigning = listOf(
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+).all { !it.isNullOrBlank() }
+
 android {
     namespace = "com.encer.offlinesplitwise"
     compileSdk {
@@ -17,11 +42,22 @@ android {
         applicationId = "com.encer.offlinesplitwise"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
-        buildConfigField("String", "API_BASE_URL", "\"https://api.splitwise.ir/api/v1\"")
+        versionCode = releaseVersionCode
+        versionName = releaseVersionName
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(requireNotNull(releaseStoreFile))
+                storePassword = requireNotNull(releaseStorePassword)
+                keyAlias = requireNotNull(releaseKeyAlias)
+                keyPassword = requireNotNull(releaseKeyPassword)
+            }
+        }
     }
 
     buildTypes {
@@ -37,6 +73,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
