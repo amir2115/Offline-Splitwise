@@ -28,6 +28,10 @@ val myketStoreUrl = propertyOrEnv(
     "OFFLINE_SPLITWISE_MYKET_STORE_URL",
     "https://myket.ir/app/com.encer.offlinesplitwise"
 )
+val organicStoreUrl = propertyOrEnv(
+    "OFFLINE_SPLITWISE_ORGANIC_STORE_URL",
+    "https://splitwise.ir/downloads/offline-splitwise"
+)
 
 val releaseStoreFile = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_STORE_FILE")
 val releaseStorePassword = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_STORE_PASSWORD")
@@ -68,6 +72,11 @@ android {
             dimension = "distribution"
             buildConfigField("String", "STORE_CHANNEL", "\"myket\"")
             buildConfigField("String", "DEFAULT_STORE_URL", "\"$myketStoreUrl\"")
+        }
+        create("organic") {
+            dimension = "distribution"
+            buildConfigField("String", "STORE_CHANNEL", "\"organic\"")
+            buildConfigField("String", "DEFAULT_STORE_URL", "\"$organicStoreUrl\"")
         }
     }
 
