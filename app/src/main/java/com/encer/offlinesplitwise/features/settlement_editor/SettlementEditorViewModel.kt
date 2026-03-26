@@ -14,6 +14,7 @@ import com.encer.offlinesplitwise.domain.usecase.ObserveGroupBalancesParams
 import com.encer.offlinesplitwise.domain.usecase.ObserveGroupBalancesUseCase
 import com.encer.offlinesplitwise.domain.usecase.SimplifyDebtsParams
 import com.encer.offlinesplitwise.domain.usecase.SimplifyDebtsUseCase
+import com.encer.offlinesplitwise.domain.usecase.canCreateTransaction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,7 +61,7 @@ class SettlementEditorViewModel @Inject constructor(
                         fromMemberId = preferredPair.first,
                         toMemberId = preferredPair.second,
                         suggestedAmount = computeSuggestedAmount(preferredPair.first, preferredPair.second, latestBalances),
-                        canCreateTransaction = settlementId != null || members.size >= 2,
+                        canCreateTransaction = canCreateTransaction(memberCount = members.size, isEdit = settlementId != null),
                     )
                 }
             }

@@ -15,6 +15,7 @@ import com.encer.offlinesplitwise.domain.repository.ExpenseRepository
 import com.encer.offlinesplitwise.domain.repository.MemberRepository
 import com.encer.offlinesplitwise.domain.usecase.ValidateExpenseInputParams
 import com.encer.offlinesplitwise.domain.usecase.ValidateExpenseInputUseCase
+import com.encer.offlinesplitwise.domain.usecase.canCreateTransaction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,7 +56,7 @@ class ExpenseEditorViewModel @Inject constructor(
                             )
                         },
                         loaded = true,
-                        canCreateTransaction = expenseId != null || members.size >= 2,
+                        canCreateTransaction = canCreateTransaction(memberCount = members.size, isEdit = expenseId != null),
                     )
                 }
                 if (expenseId == null && _uiState.value.members.all { !it.includedInSplit }) {

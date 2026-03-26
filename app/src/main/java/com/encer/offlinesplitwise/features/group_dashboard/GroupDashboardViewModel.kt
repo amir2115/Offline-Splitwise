@@ -9,6 +9,7 @@ import com.encer.offlinesplitwise.domain.repository.MemberRepository
 import com.encer.offlinesplitwise.domain.repository.SettlementRepository
 import com.encer.offlinesplitwise.domain.usecase.ObserveGroupSummaryParams
 import com.encer.offlinesplitwise.domain.usecase.ObserveGroupSummaryUseCase
+import com.encer.offlinesplitwise.domain.usecase.canCreateTransaction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,7 +46,7 @@ class GroupDashboardViewModel @Inject constructor(
             members = members,
             expenses = expenses,
             settlements = settlements,
-            canCreateTransactions = members.size >= 2,
+            canCreateTransactions = canCreateTransaction(memberCount = members.size, isEdit = false),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GroupDashboardUiState())
 

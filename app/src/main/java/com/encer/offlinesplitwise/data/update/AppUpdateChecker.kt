@@ -38,22 +38,7 @@ class AppUpdateChecker @Inject constructor(
         val currentVersionCode = PackageInfoCompat.getLongVersionCode(
             context.packageManager.getPackageInfo(context.packageName, 0)
         ).toInt()
-
-        val minSupported = payload.minSupportedVersionCode
-        val latest = payload.latestVersionCode
-        val mode = when {
-            minSupported != null && currentVersionCode < minSupported -> AppUpdateMode.HARD
-            latest != null && currentVersionCode < latest && payload.updateMode.equals("soft", ignoreCase = true) -> AppUpdateMode.SOFT
-            latest != null && currentVersionCode < latest && payload.updateMode.equals("hard", ignoreCase = true) -> AppUpdateMode.HARD
-            else -> AppUpdateMode.NONE
-        }
-
-        _updateState.value = AppUpdateState(
-            mode = mode,
-            storeUrl = payload.storeUrl,
-            title = payload.updateTitle,
-            message = payload.updateMessage,
-        )
+        _updateState.value = resolveAppUpdateState(currentVersionCode = currentVersionCode, payload = payload)
     }
 
     fun dismissSoftUpdate() {
@@ -61,4 +46,25 @@ class AppUpdateChecker @Inject constructor(
             _updateState.value = AppUpdateState()
         }
     }
+}
+
+fun resolveAppUpdateState(
+    currentVersionCode: Int,
+    payload: com.encer.offlinesplitwise.data.remote.model.HealthCheckResponse,
+): AppUpdateState {
+    val minSupported = payload.minSupportedVersionCode
+    val latest = payload.latestVersionCode
+    val mode = when {
+        minSupported != null && currentVersionCode < minSupported -> AppUpdateMode.HARD
+        latest != null && currentVersionCode < latest && payload.updateMode.equals("soft", ignoreCase = true) -> AppUpdateMode.SOFT
+        latest != null && currentVersionCode < latest && payload.updateMode.equals("hard", ignoreCase = true) -> AppUpdateMode.HARD
+        else -> AppUpdateMode.NONE
+    }
+
+    return AppUpdateState(
+        mode = mode,
+        storeUrl = payload.storeUrl,
+        title = payload.updateTitle,
+        message = payload.updateMessage,
+    )
 }
