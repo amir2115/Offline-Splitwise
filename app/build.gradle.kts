@@ -135,6 +135,28 @@ android {
             excludes += "META-INF/NOTICE*"
         }
     }
+    testOptions {
+        managedDevices {
+            localDevices {
+                create("phoneApi35") {
+                    device = "Pixel 6"
+                    apiLevel = 35
+                    systemImageSource = "aosp-atd"
+                }
+                create("tabletApi35") {
+                    device = "Pixel Tablet"
+                    apiLevel = 35
+                    systemImageSource = "aosp-atd"
+                }
+            }
+            groups {
+                create("responsiveSmoke") {
+                    targetDevices.add(allDevices["phoneApi35"])
+                    targetDevices.add(allDevices["tabletApi35"])
+                }
+            }
+        }
+    }
 }
 
 ksp {

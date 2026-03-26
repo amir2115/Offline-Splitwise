@@ -89,9 +89,37 @@ fun GroupDashboardScreen(
     onOpenExpense: (String) -> Unit,
     onEditSettlement: (String) -> Unit,
 ) {
-    val strings = appStrings()
     val viewModel: GroupDashboardViewModel = appHiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    GroupDashboardContent(
+        uiState = uiState,
+        groupId = groupId,
+        onBack = onBack,
+        onOpenMembers = onOpenMembers,
+        onAddExpense = onAddExpense,
+        onAddSettlement = onAddSettlement,
+        onOpenBalances = onOpenBalances,
+        onOpenExpense = onOpenExpense,
+        onEditSettlement = onEditSettlement,
+        onDeleteSettlement = { viewModel.deleteSettlement(it) },
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Composable
+internal fun GroupDashboardContent(
+    uiState: GroupDashboardUiState,
+    groupId: String,
+    onBack: () -> Unit,
+    onOpenMembers: () -> Unit,
+    onAddExpense: () -> Unit,
+    onAddSettlement: () -> Unit,
+    onOpenBalances: () -> Unit,
+    onOpenExpense: (String) -> Unit,
+    onEditSettlement: (String) -> Unit,
+    onDeleteSettlement: (String) -> Unit,
+) {
+    val strings = appStrings()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var contentVisible by remember(groupId) { mutableStateOf(false) }
@@ -221,7 +249,7 @@ fun GroupDashboardScreen(
                     settlement = settlement,
                     members = uiState.members,
                     onEdit = { onEditSettlement(settlement.id) },
-                    onDelete = { viewModel.deleteSettlement(settlement.id) }
+                    onDelete = { onDeleteSettlement(settlement.id) }
                 )
             }
             item {

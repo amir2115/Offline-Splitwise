@@ -68,12 +68,48 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun GroupsScreen(onOpenGroup: (String) -> Unit) {
-    val strings = appStrings()
     val viewModel: GroupsViewModel = com.encer.offlinesplitwise.ui.components.appHiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
     var editingGroupId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingGroupActionId by rememberSaveable { mutableStateOf<String?>(null) }
+
+    GroupsContent(
+        uiState = uiState,
+        showCreateDialog = showCreateDialog,
+        editingGroupId = editingGroupId,
+        pendingGroupActionId = pendingGroupActionId,
+        onOpenGroup = onOpenGroup,
+        onShowCreateDialogChange = { showCreateDialog = it },
+        onEditingGroupChange = { editingGroupId = it },
+        onPendingGroupActionChange = { pendingGroupActionId = it },
+        onCreateGroup = { viewModel.createGroup(it) },
+        onUpdateGroup = { viewModel.updateGroup(it) },
+        onDeleteGroup = { viewModel.deleteGroup(it) },
+        onLeaveGroup = { viewModel.leaveGroup(it) },
+        onAcceptInvite = { viewModel.acceptInvite(it) },
+        onRejectInvite = { viewModel.rejectInvite(it) },
+    )
+}
+
+@Composable
+internal fun GroupsContent(
+    uiState: GroupsUiState,
+    showCreateDialog: Boolean,
+    editingGroupId: String?,
+    pendingGroupActionId: String?,
+    onOpenGroup: (String) -> Unit,
+    onShowCreateDialogChange: (Boolean) -> Unit,
+    onEditingGroupChange: (String?) -> Unit,
+    onPendingGroupActionChange: (String?) -> Unit,
+    onCreateGroup: (String) -> Unit,
+    onUpdateGroup: (com.encer.offlinesplitwise.domain.model.Group) -> Unit,
+    onDeleteGroup: (String) -> Unit,
+    onLeaveGroup: (String) -> Unit,
+    onAcceptInvite: (String) -> Unit,
+    onRejectInvite: (String) -> Unit,
+) {
+    val strings = appStrings()
 
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -82,7 +118,7 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
                 title = { Text(strings.appTitle, style = MaterialTheme.typography.titleLarge) },
                 colors = appTopBarColors(),
                 actions = {
-                    IconButton(onClick = { showCreateDialog = true }) {
+                    IconButton(onClick = { onShowCreateDialogChange(true) }) {
                         Icon(Icons.Rounded.Add, contentDescription = strings.addGroup)
                     }
                 }
@@ -181,7 +217,7 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             OutlinedButton(
-                                onClick = { viewModel.rejectInvite(invite.id) },
+                                onClick = { onRejectInvite(invite.id) },
                                 modifier = Modifier.weight(1f),
                                 border = androidx.compose.foundation.BorderStroke(
                                     1.dp,
@@ -195,7 +231,7 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
                                 Text(strings.rejectInvite, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
                             }
                             OutlinedButton(
-                                onClick = { viewModel.acceptInvite(invite.id) },
+                                onClick = { onAcceptInvite(invite.id) },
                                 modifier = Modifier.weight(1f),
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
@@ -242,10 +278,10 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
                                 Text(group.name, style = MaterialTheme.typography.titleLarge)
                                 Text(formatDate(group.createdAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            IconButton(onClick = { editingGroupId = group.id }) {
+                            IconButton(onClick = { onEditingGroupChange(group.id) }) {
                                 Icon(Icons.Rounded.Edit, contentDescription = strings.edit)
                             }
-                            IconButton(onClick = { pendingGroupActionId = group.id }) {
+                            IconButton(onClick = { onPendingGroupActionChange(group.id) }) {
                                 Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
                             }
                         }
@@ -267,10 +303,10 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
             initialValue = "",
             placeholder = strings.groupPlaceholder,
             confirmLabel = strings.createGroup,
-            onDismiss = { showCreateDialog = false },
+            onDismiss = { onShowCreateDialogChange(false) },
             onConfirm = {
-                viewModel.createGroup(it)
-                showCreateDialog = false
+                onCreateGroup(it)
+                onShowCreateDialogChange(false)
             }
         )
     }
@@ -283,10 +319,10 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
                 initialValue = group.name,
                 placeholder = strings.groupPlaceholder,
                 confirmLabel = strings.save,
-                onDismiss = { editingGroupId = null },
+                onDismiss = { onEditingGroupChange(null) },
                 onConfirm = { name ->
-                    viewModel.updateGroup(group.copy(name = name))
-                    editingGroupId = null
+                    onUpdateGroup(group.copy(name = name))
+                    onEditingGroupChange(null)
                 }
             )
         }
@@ -300,14 +336,14 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
                 groupName = group.name,
                 canLeave = true,
                 canDeleteForEveryone = canDeleteForEveryone,
-                onDismiss = { pendingGroupActionId = null },
+                onDismiss = { onPendingGroupActionChange(null) },
                 onDeleteForEveryone = {
-                    viewModel.deleteGroup(group.id)
-                    pendingGroupActionId = null
+                    onDeleteGroup(group.id)
+                    onPendingGroupActionChange(null)
                 },
                 onLeaveGroup = {
-                    viewModel.leaveGroup(group.id)
-                    pendingGroupActionId = null
+                    onLeaveGroup(group.id)
+                    onPendingGroupActionChange(null)
                 }
             )
         }

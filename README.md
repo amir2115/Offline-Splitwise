@@ -170,6 +170,38 @@ Or open the project in Android Studio and run the `app` configuration.
 ./gradlew :app:assembleBazaarRelease :app:assembleMyketRelease :app:assembleOrganicRelease
 ```
 
+## Fast responsive testing
+
+For fast visual checks during development, open the Compose previews defined in:
+
+- [app/src/debug/java/com/encer/offlinesplitwise/ui/preview/ResponsiveScreenPreviews.kt](app/src/debug/java/com/encer/offlinesplitwise/ui/preview/ResponsiveScreenPreviews.kt)
+
+These previews render the main screens in multiple sizes and themes without launching an emulator.
+
+For automated smoke tests on multiple screen sizes, use the managed devices defined in:
+
+- [app/build.gradle.kts](app/build.gradle.kts)
+
+Available local devices:
+
+- `phoneApi35`
+- `tabletApi35`
+
+Device group:
+
+- `responsiveSmoke`
+
+Useful commands:
+
+```bash
+./gradlew :app:tasks --all | rg responsiveSmoke
+./gradlew :app:responsiveSmokeDebugAndroidTest
+```
+
+The smoke test coverage currently lives in:
+
+- [app/src/androidTest/java/com/encer/offlinesplitwise/ResponsiveSmokeTest.kt](app/src/androidTest/java/com/encer/offlinesplitwise/ResponsiveSmokeTest.kt)
+
 ## Release build
 
 Release optimizations are enabled:

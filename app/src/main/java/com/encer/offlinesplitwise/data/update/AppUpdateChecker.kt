@@ -52,6 +52,7 @@ class AppUpdateChecker @Inject constructor(
 fun resolveAppUpdateState(
     currentVersionCode: Int,
     payload: com.encer.offlinesplitwise.data.remote.model.HealthCheckResponse,
+    fallbackStoreUrl: String = BuildConfig.DEFAULT_STORE_URL,
 ): AppUpdateState {
     val minSupported = payload.minSupportedVersionCode
     val latest = payload.latestVersionCode
@@ -64,7 +65,7 @@ fun resolveAppUpdateState(
 
     return AppUpdateState(
         mode = mode,
-        storeUrl = payload.storeUrl ?: BuildConfig.DEFAULT_STORE_URL.takeIf { it.isNotBlank() },
+        storeUrl = payload.storeUrl ?: fallbackStoreUrl.takeIf { it.isNotBlank() },
         title = payload.updateTitle,
         message = payload.updateMessage,
     )

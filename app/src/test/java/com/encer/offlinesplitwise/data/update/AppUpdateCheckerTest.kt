@@ -1,6 +1,5 @@
 package com.encer.offlinesplitwise.data.update
 
-import com.encer.offlinesplitwise.BuildConfig
 import com.encer.offlinesplitwise.data.remote.model.HealthCheckResponse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -67,11 +66,12 @@ class AppUpdateCheckerTest {
                 latestVersionCode = 18,
                 updateMode = "soft",
                 storeUrl = null,
-            )
+            ),
+            fallbackStoreUrl = "https://fallback.example.com/app"
         )
 
         assertEquals(AppUpdateMode.SOFT, state.mode)
-        assertEquals(BuildConfig.DEFAULT_STORE_URL, state.storeUrl)
+        assertEquals("https://fallback.example.com/app", state.storeUrl)
         assertTrue(state.isVisible)
     }
 }
