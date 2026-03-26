@@ -1,5 +1,6 @@
 package com.encer.offlinesplitwise.data.update
 
+import com.encer.offlinesplitwise.BuildConfig
 import com.encer.offlinesplitwise.data.remote.model.HealthCheckResponse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -55,5 +56,22 @@ class AppUpdateCheckerTest {
 
         assertEquals(AppUpdateMode.NONE, state.mode)
         assertFalse(state.isVisible)
+    }
+
+    @Test
+    fun `falls back to flavor store url when backend response omits store url`() {
+        val state = resolveAppUpdateState(
+            currentVersionCode = 14,
+            payload = HealthCheckResponse(
+                status = "ok",
+                latestVersionCode = 18,
+                updateMode = "soft",
+                storeUrl = null,
+            )
+        )
+
+        assertEquals(AppUpdateMode.SOFT, state.mode)
+        assertEquals(BuildConfig.DEFAULT_STORE_URL, state.storeUrl)
+        assertTrue(state.isVisible)
     }
 }

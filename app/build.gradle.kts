@@ -20,6 +20,14 @@ fun intPropertyOrEnv(name: String, defaultValue: Int): Int =
 val releaseVersionCode = intPropertyOrEnv("OFFLINE_SPLITWISE_VERSION_CODE", 1)
 val releaseVersionName = propertyOrEnv("OFFLINE_SPLITWISE_VERSION_NAME", "1.0")
 val apiBaseUrl = propertyOrEnv("OFFLINE_SPLITWISE_API_BASE_URL", "https://api.splitwise.ir/api/v1")
+val bazaarStoreUrl = propertyOrEnv(
+    "OFFLINE_SPLITWISE_BAZAAR_STORE_URL",
+    "https://cafebazaar.ir/app/com.encer.offlinesplitwise"
+)
+val myketStoreUrl = propertyOrEnv(
+    "OFFLINE_SPLITWISE_MYKET_STORE_URL",
+    "https://myket.ir/app/com.encer.offlinesplitwise"
+)
 
 val releaseStoreFile = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_STORE_FILE")
 val releaseStorePassword = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_STORE_PASSWORD")
@@ -37,6 +45,7 @@ android {
     compileSdk {
         version = release(36)
     }
+    flavorDimensions += "distribution"
 
     defaultConfig {
         applicationId = "com.encer.offlinesplitwise"
@@ -47,6 +56,19 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    productFlavors {
+        create("bazaar") {
+            dimension = "distribution"
+            buildConfigField("String", "STORE_CHANNEL", "\"bazaar\"")
+            buildConfigField("String", "DEFAULT_STORE_URL", "\"$bazaarStoreUrl\"")
+        }
+        create("myket") {
+            dimension = "distribution"
+            buildConfigField("String", "STORE_CHANNEL", "\"myket\"")
+            buildConfigField("String", "DEFAULT_STORE_URL", "\"$myketStoreUrl\"")
+        }
     }
 
     signingConfigs {

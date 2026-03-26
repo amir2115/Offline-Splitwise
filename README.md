@@ -157,7 +157,7 @@ Requirements:
 Run locally:
 
 ```bash
-./gradlew :app:installDebug
+./gradlew :app:installBazaarDebug
 ```
 
 Or open the project in Android Studio and run the `app` configuration.
@@ -166,8 +166,8 @@ Or open the project in Android Studio and run the `app` configuration.
 
 ```bash
 ./gradlew :app:compileDebugKotlin
-./gradlew testDebugUnitTest
-./gradlew :app:assembleRelease
+./gradlew testBazaarDebugUnitTest testMyketDebugUnitTest
+./gradlew :app:assembleBazaarRelease :app:assembleMyketRelease
 ```
 
 ## Release build
@@ -189,45 +189,59 @@ Release configuration can be injected with Gradle properties or environment vari
 - `OFFLINE_SPLITWISE_VERSION_CODE`
 - `OFFLINE_SPLITWISE_VERSION_NAME`
 - `OFFLINE_SPLITWISE_API_BASE_URL`
+- `OFFLINE_SPLITWISE_BAZAAR_STORE_URL`
+- `OFFLINE_SPLITWISE_MYKET_STORE_URL`
 - `OFFLINE_SPLITWISE_RELEASE_STORE_FILE`
 - `OFFLINE_SPLITWISE_RELEASE_STORE_PASSWORD`
 - `OFFLINE_SPLITWISE_RELEASE_KEY_ALIAS`
 - `OFFLINE_SPLITWISE_RELEASE_KEY_PASSWORD`
 
-Example signed release build:
+Store variants:
+
+- `bazaar`: sets `BuildConfig.STORE_CHANNEL` to `bazaar`
+- `myket`: sets `BuildConfig.STORE_CHANNEL` to `myket`
+
+Each variant sends `X-App-Store` on API requests so the backend can return the matching update URL.
+
+Example signed Bazaar release build:
 
 ```bash
-./gradlew :app:assembleRelease \
+./gradlew :app:assembleBazaarRelease \
   -POFFLINE_SPLITWISE_VERSION_CODE=42 \
   -POFFLINE_SPLITWISE_VERSION_NAME=1.4.0 \
+  -POFFLINE_SPLITWISE_BAZAAR_STORE_URL=https://cafebazaar.ir/app/com.encer.offlinesplitwise \
+  -POFFLINE_SPLITWISE_MYKET_STORE_URL=https://myket.ir/app/com.encer.offlinesplitwise \
   -POFFLINE_SPLITWISE_RELEASE_STORE_FILE=/absolute/path/release.keystore \
   -POFFLINE_SPLITWISE_RELEASE_STORE_PASSWORD=changeit \
   -POFFLINE_SPLITWISE_RELEASE_KEY_ALIAS=release \
   -POFFLINE_SPLITWISE_RELEASE_KEY_PASSWORD=changeit
 ```
 
-If signing properties are missing, Gradle still builds an unsigned release artifact.
+If signing properties are missing, Gradle still builds unsigned release artifacts per store variant.
 
-Unsigned release output:
+Unsigned release outputs:
 
 ```text
-app/build/outputs/apk/release/app-release-unsigned.apk
+app/build/outputs/apk/bazaar/release/app-bazaar-release-unsigned.apk
+app/build/outputs/apk/myket/release/app-myket-release-unsigned.apk
 ```
 
-Signed release output:
+Signed release outputs:
 
 ```text
-app/build/outputs/apk/release/app-release.apk
+app/build/outputs/apk/bazaar/release/app-bazaar-release.apk
+app/build/outputs/apk/myket/release/app-myket-release.apk
 ```
 
 Suggested release checklist:
 
 1. Set the final `OFFLINE_SPLITWISE_VERSION_CODE` and `OFFLINE_SPLITWISE_VERSION_NAME`.
 2. Point `OFFLINE_SPLITWISE_API_BASE_URL` at production.
-3. Provide release keystore properties from CI secrets or local shell env.
-4. Run `./gradlew testDebugUnitTest`.
-5. Run `./gradlew :app:assembleRelease`.
-6. Upload the signed APK or AAB that matches the store channel requirements.
+3. Set both store URLs and publish each flavor to its own channel.
+4. Provide release keystore properties from CI secrets or local shell env.
+5. Run `./gradlew testBazaarDebugUnitTest testMyketDebugUnitTest`.
+6. Run `./gradlew :app:assembleBazaarRelease :app:assembleMyketRelease`.
+7. Upload each signed artifact to the matching store channel.
 
 ## UI settings
 

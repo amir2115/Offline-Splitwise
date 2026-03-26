@@ -6,6 +6,7 @@ import com.encer.offlinesplitwise.data.remote.api.GroupInvitesApi
 import com.encer.offlinesplitwise.data.remote.api.HealthApi
 import com.encer.offlinesplitwise.data.remote.api.SyncApi
 import com.encer.offlinesplitwise.data.remote.network.AuthInterceptor
+import com.encer.offlinesplitwise.data.remote.network.StoreChannelInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,10 +34,12 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
+        storeChannelInterceptor: StoreChannelInterceptor,
         @NetworkInspectionInterceptor networkInspectionInterceptor: Interceptor,
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
+            .addInterceptor(storeChannelInterceptor)
             .addInterceptor(networkInspectionInterceptor)
         if (BuildConfig.DEBUG) {
             val logging = HttpLoggingInterceptor().apply {

@@ -2,6 +2,7 @@ package com.encer.offlinesplitwise.data.update
 
 import android.content.Context
 import androidx.core.content.pm.PackageInfoCompat
+import com.encer.offlinesplitwise.BuildConfig
 import com.encer.offlinesplitwise.data.remote.network.ApiClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -63,7 +64,7 @@ fun resolveAppUpdateState(
 
     return AppUpdateState(
         mode = mode,
-        storeUrl = payload.storeUrl,
+        storeUrl = payload.storeUrl ?: BuildConfig.DEFAULT_STORE_URL.takeIf { it.isNotBlank() },
         title = payload.updateTitle,
         message = payload.updateMessage,
     )
