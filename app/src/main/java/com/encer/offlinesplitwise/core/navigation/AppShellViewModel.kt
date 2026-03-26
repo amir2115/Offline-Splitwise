@@ -6,6 +6,7 @@ import com.encer.offlinesplitwise.data.preferences.SessionRepository
 import com.encer.offlinesplitwise.data.preferences.SettingsRepository
 import com.encer.offlinesplitwise.data.sync.NetworkMonitor
 import com.encer.offlinesplitwise.data.sync.SyncCoordinator
+import com.encer.offlinesplitwise.data.update.AppUpdateChecker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -16,6 +17,7 @@ class AppShellViewModel @Inject constructor(
     val sessionRepository: SessionRepository,
     val syncCoordinator: SyncCoordinator,
     val networkMonitor: NetworkMonitor,
+    val appUpdateChecker: AppUpdateChecker,
 ) : ViewModel() {
     init {
         viewModelScope.launch {
@@ -23,6 +25,7 @@ class AppShellViewModel @Inject constructor(
             networkMonitor.observeStatus().collect { status ->
                 if (status.hasInternet && status.isApiReachable) {
                     syncCoordinator.requestSync()
+                    appUpdateChecker.refreshUpdatePolicy()
                 }
             }
         }

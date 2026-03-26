@@ -9,6 +9,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -294,9 +295,11 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
     pendingGroupActionId?.let { groupId ->
         val group = uiState.groups.firstOrNull { it.id == groupId }
         if (group != null) {
+            val canDeleteForEveryone = group.userId == null || group.userId == uiState.currentUserId
             GroupActionDialog(
                 groupName = group.name,
-                canLeave = uiState.canLeaveGroups,
+                canLeave = true,
+                canDeleteForEveryone = canDeleteForEveryone,
                 onDismiss = { pendingGroupActionId = null },
                 onDeleteForEveryone = {
                     viewModel.deleteGroup(group.id)
@@ -315,6 +318,7 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
 private fun GroupActionDialog(
     groupName: String,
     canLeave: Boolean,
+    canDeleteForEveryone: Boolean,
     onDismiss: () -> Unit,
     onDeleteForEveryone: () -> Unit,
     onLeaveGroup: () -> Unit,
@@ -337,19 +341,44 @@ private fun GroupActionDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ActionHintCard(
-                    title = strings.leaveGroup,
-                    subtitle = strings.groupLeaveMessage,
-                    accent = MaterialTheme.colorScheme.error,
-                    onClick = onLeaveGroup
-                )
                 if (canLeave) {
-                    ActionHintCard(
-                        title = strings.deleteGroupForEveryone,
-                        subtitle = strings.groupDeleteConfirmMessage,
-                        accent = MaterialTheme.colorScheme.outline,
-                        onClick = onDeleteForEveryone
-                    )
+                    OutlinedButton(
+                        onClick = onLeaveGroup,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = appOutlinedButtonColors()
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(strings.leaveGroup, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                strings.groupLeaveMessage,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                if (canDeleteForEveryone) {
+                    OutlinedButton(
+                        onClick = onDeleteForEveryone,
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(strings.deleteGroupForEveryone, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                strings.groupDeleteConfirmMessage,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.85f)
+                            )
+                        }
+                    }
                 }
             }
         },
@@ -360,42 +389,6 @@ private fun GroupActionDialog(
         },
         dismissButton = {}
     )
-}
-
-@Composable
-private fun ActionHintCard(
-    title: String,
-    subtitle: String,
-    accent: androidx.compose.ui.graphics.Color,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = accent.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(20.dp)
-            )
-            .border(
-                width = 1.dp,
-                color = accent.copy(alpha = 0.18f),
-                shape = RoundedCornerShape(20.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
 }
 
 @Composable

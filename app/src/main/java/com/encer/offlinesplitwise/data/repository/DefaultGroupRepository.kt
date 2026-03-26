@@ -86,8 +86,12 @@ class DefaultGroupRepository @Inject constructor(
     }
 
     override suspend fun leaveGroup(groupId: String) {
-        val session = sessionRepository.currentSession() ?: return
-        val current = memberDao.getByGroupAndUserId(groupId, session.userId) ?: return
+        val session = sessionRepository.currentSession()
+        val current = if (session != null) {
+            memberDao.getByGroupAndUserId(groupId, session.userId)
+        } else {
+            memberDao.getActiveMembers(groupId).lastOrNull()
+        } ?: return
         val now = System.currentTimeMillis()
         memberDao.upsert(current.copy(deletedAt = now, updatedAt = now, syncState = SyncState.PENDING_DELETE))
         syncCoordinator.requestSync()

@@ -1,5 +1,13 @@
 package com.encer.offlinesplitwise.domain
 
+import com.encer.offlinesplitwise.domain.model.Expense
+import com.encer.offlinesplitwise.domain.model.ExpenseShare
+import com.encer.offlinesplitwise.domain.model.Member
+import com.encer.offlinesplitwise.domain.model.Settlement
+import com.encer.offlinesplitwise.domain.model.SplitType
+import com.encer.offlinesplitwise.domain.usecase.BalanceCalculator
+import com.encer.offlinesplitwise.domain.usecase.ValidateExpenseInputParams
+import com.encer.offlinesplitwise.domain.usecase.ValidateExpenseInputUseCase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -12,10 +20,12 @@ class BalanceCalculatorTest {
         val validator = ValidateExpenseInputUseCase()
 
         val validation = validator(
-            totalAmount = 1000,
-            splitType = SplitType.EQUAL,
-            payers = listOf(ExpenseShare("1", 1000)),
-            shares = listOf(ExpenseShare("3", 0), ExpenseShare("1", 0), ExpenseShare("2", 0))
+            ValidateExpenseInputParams(
+                totalAmount = 1000,
+                splitType = SplitType.EQUAL,
+                payers = listOf(ExpenseShare("1", 1000)),
+                shares = listOf(ExpenseShare("3", 0), ExpenseShare("1", 0), ExpenseShare("2", 0))
+            )
         )
 
         assertTrue(validation.isValid)
@@ -26,9 +36,9 @@ class BalanceCalculatorTest {
     @Test
     fun `calculator produces expected balances for mixed expenses and settlements`() {
         val members = listOf(
-            Member(id = "1", groupId = "9", name = "A", createdAt = 1, updatedAt = 1),
-            Member(id = "2", groupId = "9", name = "B", createdAt = 1, updatedAt = 1),
-            Member(id = "3", groupId = "9", name = "C", createdAt = 1, updatedAt = 1)
+            Member(id = "1", groupId = "9", username = "A", createdAt = 1, updatedAt = 1),
+            Member(id = "2", groupId = "9", username = "B", createdAt = 1, updatedAt = 1),
+            Member(id = "3", groupId = "9", username = "C", createdAt = 1, updatedAt = 1)
         )
         val expenses = listOf(
             Expense(
@@ -81,8 +91,8 @@ class BalanceCalculatorTest {
     @Test
     fun `settlement reduces outstanding balances`() {
         val members = listOf(
-            Member(id = "1", groupId = "1", name = "Ali", createdAt = 1, updatedAt = 1),
-            Member(id = "2", groupId = "1", name = "Sara", createdAt = 1, updatedAt = 1)
+            Member(id = "1", groupId = "1", username = "Ali", createdAt = 1, updatedAt = 1),
+            Member(id = "2", groupId = "1", username = "Sara", createdAt = 1, updatedAt = 1)
         )
         val expenses = listOf(
             Expense(

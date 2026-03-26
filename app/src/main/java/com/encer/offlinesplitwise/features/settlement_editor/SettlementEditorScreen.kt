@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -45,7 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,8 +54,8 @@ import com.encer.offlinesplitwise.ui.components.AmountText
 import com.encer.offlinesplitwise.ui.components.AppAnimatedSection
 import com.encer.offlinesplitwise.ui.components.AppAnimatedVisibility
 import com.encer.offlinesplitwise.ui.components.AppInlineMessageCard
+import com.encer.offlinesplitwise.ui.components.CalculatorAmountField
 import com.encer.offlinesplitwise.ui.components.DashboardHeroCard
-import com.encer.offlinesplitwise.ui.components.amountVisualTransformation
 import com.encer.offlinesplitwise.ui.components.appAssistChipColors
 import com.encer.offlinesplitwise.ui.components.appCardColors
 import com.encer.offlinesplitwise.ui.components.appFieldColors
@@ -203,15 +201,13 @@ fun SettlementEditorScreen(
                             .padding(18.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        OutlinedTextField(
+                        CalculatorAmountField(
                             value = uiState.amountInput,
                             onValueChange = viewModel::setAmount,
                             modifier = Modifier.fillMaxWidth(),
-                            label = { Text(strings.settlementAmountLabel, style = MaterialTheme.typography.bodyMedium) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            visualTransformation = amountVisualTransformation,
                             colors = appFieldColors(),
-                            shape = RoundedCornerShape(20.dp)
+                            shape = RoundedCornerShape(20.dp),
+                            label = strings.settlementAmountLabel,
                         )
                         OutlinedTextField(
                             value = uiState.note,

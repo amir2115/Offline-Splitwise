@@ -17,8 +17,8 @@ import com.encer.offlinesplitwise.data.local.entity.*
         ExpenseShareEntity::class,
         SettlementEntity::class,
     ],
-    version = 3,
-    exportSchema = false
+    version = 4,
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class OfflineSplitwiseDatabase : RoomDatabase() {
@@ -35,7 +35,7 @@ abstract class OfflineSplitwiseDatabase : RoomDatabase() {
                 context,
                 OfflineSplitwiseDatabase::class.java,
                 "offline_splitwise.db"
-            ).fallbackToDestructiveMigration().build()
+            ).addMigrations(MIGRATION_3_4).build()
         }
     }
 }

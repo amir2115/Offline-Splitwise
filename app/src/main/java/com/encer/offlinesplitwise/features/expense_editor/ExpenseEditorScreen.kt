@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -45,7 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.encer.offlinesplitwise.core.common.MessageKey
@@ -54,10 +52,10 @@ import com.encer.offlinesplitwise.domain.model.SplitType
 import com.encer.offlinesplitwise.ui.components.AppAnimatedSection
 import com.encer.offlinesplitwise.ui.components.AppAnimatedVisibility
 import com.encer.offlinesplitwise.ui.components.AppInlineMessageCard
+import com.encer.offlinesplitwise.ui.components.CalculatorAmountField
 import com.encer.offlinesplitwise.ui.components.DashboardHeroCard
 import com.encer.offlinesplitwise.ui.components.DetailLine
 import com.encer.offlinesplitwise.ui.components.SectionHeader
-import com.encer.offlinesplitwise.ui.components.amountVisualTransformation
 import com.encer.offlinesplitwise.ui.components.appAssistChipColors
 import com.encer.offlinesplitwise.ui.components.appCardColors
 import com.encer.offlinesplitwise.ui.components.appFieldColors
@@ -171,15 +169,13 @@ fun ExpenseEditorScreen(
                             colors = appFieldColors(),
                             shape = RoundedCornerShape(20.dp)
                         )
-                        OutlinedTextField(
+                        CalculatorAmountField(
                             value = uiState.totalAmountInput,
                             onValueChange = viewModel::updateTotal,
                             modifier = Modifier.fillMaxWidth(),
-                            label = { Text(strings.totalAmountLabel, style = MaterialTheme.typography.bodyMedium) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            visualTransformation = amountVisualTransformation,
                             colors = appFieldColors(),
-                            shape = RoundedCornerShape(20.dp)
+                            shape = RoundedCornerShape(20.dp),
+                            label = strings.totalAmountLabel,
                         )
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             FilterChip(
@@ -279,27 +275,23 @@ private fun MemberEditorCard(
                     }
                 }
             }
-            OutlinedTextField(
+            CalculatorAmountField(
                 value = member.payerAmountInput,
                 onValueChange = onPayerChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(strings.paidHowMuchLabel, style = MaterialTheme.typography.bodyMedium) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                visualTransformation = amountVisualTransformation,
                 colors = appFieldColors(),
-                shape = RoundedCornerShape(18.dp)
+                shape = RoundedCornerShape(18.dp),
+                label = strings.paidHowMuchLabel,
             )
             AppAnimatedVisibility(visible = member.includedInSplit) {
                 if (splitType == SplitType.EXACT) {
-                    OutlinedTextField(
+                    CalculatorAmountField(
                         value = member.exactShareInput,
                         onValueChange = onExactShareChange,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text(strings.shareAmountLabel, style = MaterialTheme.typography.bodyMedium) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        visualTransformation = amountVisualTransformation,
                         colors = appFieldColors(),
-                        shape = RoundedCornerShape(18.dp)
+                        shape = RoundedCornerShape(18.dp),
+                        label = strings.shareAmountLabel,
                     )
                 } else {
                     DetailLine(label = strings.equalShareLabel, value = equalSharePreview)

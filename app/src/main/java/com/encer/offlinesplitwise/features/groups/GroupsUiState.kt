@@ -8,5 +8,6 @@ data class GroupsUiState(
     val invites: List<GroupInvite> = emptyList(),
     val isLoading: Boolean = false,
     val canLeaveGroups: Boolean = false,
+    val currentUserId: String? = null,
     val errorMessage: String? = null,
 )

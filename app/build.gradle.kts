@@ -50,6 +50,11 @@ android {
         compose = true
         buildConfig = true
     }
+    sourceSets {
+        getByName("androidTest") {
+            assets.srcDir("$projectDir/schemas")
+        }
+    }
     androidResources {
         localeFilters += listOf("fa")
     }
@@ -60,6 +65,12 @@ android {
             excludes += "META-INF/NOTICE*"
         }
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.incremental", "true")
+    arg("room.generateKotlin", "true")
 }
 
 configurations.configureEach {

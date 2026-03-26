@@ -12,4 +12,5 @@ data class GroupDashboardUiState(
     val members: List<Member> = emptyList(),
     val expenses: List<Expense> = emptyList(),
     val settlements: List<Settlement> = emptyList(),
+    val canCreateTransactions: Boolean = false,
 )

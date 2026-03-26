@@ -1,6 +1,8 @@
 package com.encer.offlinesplitwise.core.navigation
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -28,6 +31,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -56,6 +60,7 @@ import com.encer.offlinesplitwise.features.groups.GroupsScreen
 import com.encer.offlinesplitwise.features.members.MembersScreen
 import com.encer.offlinesplitwise.features.settings.SettingsScreen
 import com.encer.offlinesplitwise.features.settlement_editor.SettlementEditorScreen
+import com.encer.offlinesplitwise.data.update.AppUpdateMode
 import java.util.Locale
 
 private enum class RootDestination(val route: String) {
@@ -70,6 +75,8 @@ fun OfflineSplitwiseApp() {
     val settings by appShellViewModel.settingsRepository.observeSettings().collectAsStateWithLifecycle()
     val session by appShellViewModel.sessionRepository.observeSession().collectAsStateWithLifecycle()
     val syncStatus by appShellViewModel.syncCoordinator.observeSyncStatus().collectAsStateWithLifecycle()
+    val updateState by appShellViewModel.appUpdateChecker.observeUpdateState().collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val strings = stringsFor(settings.language)
     val layoutDirection = if (settings.language == AppLanguage.FA) LayoutDirection.Rtl else LayoutDirection.Ltr
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
@@ -94,6 +101,44 @@ fun OfflineSplitwiseApp() {
     ) {
         OfflineSplitwiseTheme(darkTheme = settings.themeMode == com.encer.offlinesplitwise.data.preferences.AppThemeMode.DARK) {
             AppSystemBars(darkTheme = settings.themeMode == com.encer.offlinesplitwise.data.preferences.AppThemeMode.DARK)
+            if (updateState.isVisible) {
+                AlertDialog(
+                    onDismissRequest = {
+                        if (updateState.mode == AppUpdateMode.SOFT) {
+                            appShellViewModel.appUpdateChecker.dismissSoftUpdate()
+                        }
+                    },
+                    title = {
+                        Text(
+                            updateState.title
+                                ?: if (updateState.mode == AppUpdateMode.HARD) strings.updateRequiredTitle else strings.updateAvailableTitle
+                        )
+                    },
+                    text = {
+                        Text(updateState.message ?: strings.updateDefaultMessage)
+                    },
+                    confirmButton = {
+                        androidx.compose.material3.TextButton(
+                            onClick = {
+                                updateState.storeUrl?.let { url ->
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                                }
+                            }
+                        ) {
+                            Text(strings.updateNow)
+                        }
+                    },
+                    dismissButton = {
+                        if (updateState.mode == AppUpdateMode.SOFT) {
+                            androidx.compose.material3.TextButton(
+                                onClick = appShellViewModel.appUpdateChecker::dismissSoftUpdate
+                            ) {
+                                Text(strings.updateLater)
+                            }
+                        }
+                    }
+                )
+            }
             if (session == null && !guestMode) {
                 Box(
                     modifier = Modifier

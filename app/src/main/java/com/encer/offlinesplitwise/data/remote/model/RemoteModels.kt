@@ -44,6 +44,12 @@ data class TokenRefreshRequest(
 @Serializable
 data class HealthCheckResponse(
     val status: String? = null,
+    @SerialName("min_supported_version_code") val minSupportedVersionCode: Int? = null,
+    @SerialName("latest_version_code") val latestVersionCode: Int? = null,
+    @SerialName("update_mode") val updateMode: String? = null,
+    @SerialName("store_url") val storeUrl: String? = null,
+    @SerialName("update_title") val updateTitle: String? = null,
+    @SerialName("update_message") val updateMessage: String? = null,
 )
 
 @Serializable

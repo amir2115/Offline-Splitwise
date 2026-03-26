@@ -34,6 +34,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -41,6 +43,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +60,7 @@ import com.encer.offlinesplitwise.domain.model.memberName
 import com.encer.offlinesplitwise.ui.components.AmountText
 import com.encer.offlinesplitwise.ui.components.AppAnimatedSection
 import com.encer.offlinesplitwise.ui.components.AppAnimatedVisibility
+import com.encer.offlinesplitwise.ui.components.AppInlineMessageCard
 import com.encer.offlinesplitwise.ui.components.DashboardHeroCard
 import com.encer.offlinesplitwise.ui.components.EmptyStateCard
 import com.encer.offlinesplitwise.ui.components.SectionHeader
@@ -71,6 +75,7 @@ import com.encer.offlinesplitwise.ui.formatting.formatAmount
 import com.encer.offlinesplitwise.ui.formatting.formatAmountCompact
 import com.encer.offlinesplitwise.ui.localization.LocalAppLanguage
 import com.encer.offlinesplitwise.ui.localization.appStrings
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -87,6 +92,8 @@ fun GroupDashboardScreen(
     val strings = appStrings()
     val viewModel: GroupDashboardViewModel = appHiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
     var contentVisible by remember(groupId) { mutableStateOf(false) }
 
     LaunchedEffect(groupId) {
@@ -95,6 +102,7 @@ fun GroupDashboardScreen(
 
     Scaffold(
         containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(uiState.group?.name ?: strings.groupFallbackTitle, style = MaterialTheme.typography.titleLarge) },
@@ -139,12 +147,50 @@ fun GroupDashboardScreen(
                 AppAnimatedSection(visible = contentVisible, enter = appHeroSectionEnter(delayMillis = 120)) {
                     QuickActionsGrid(
                         actions = listOf(
-                            QuickActionItem(strings.membersAction, Icons.Rounded.PersonAddAlt, onOpenMembers),
-                            QuickActionItem(strings.newExpenseAction, Icons.Rounded.Add, onAddExpense),
-                            QuickActionItem(strings.addSettlementAction, Icons.Rounded.Payments, onAddSettlement),
-                            QuickActionItem(strings.balancesAction, Icons.Rounded.SwapHoriz, onOpenBalances)
+                            QuickActionItem(
+                                label = strings.membersAction,
+                                imageVector = Icons.Rounded.PersonAddAlt,
+                                onClick = onOpenMembers
+                            ),
+                            QuickActionItem(
+                                label = strings.newExpenseAction,
+                                imageVector = Icons.Rounded.Add,
+                                enabled = uiState.canCreateTransactions,
+                                onClick = {
+                                    if (uiState.canCreateTransactions) {
+                                        onAddExpense()
+                                    } else {
+                                        coroutineScope.launch { snackbarHostState.showSnackbar(strings.needSecondMemberMessage) }
+                                    }
+                                }
+                            ),
+                            QuickActionItem(
+                                label = strings.addSettlementAction,
+                                imageVector = Icons.Rounded.Payments,
+                                enabled = uiState.canCreateTransactions,
+                                onClick = {
+                                    if (uiState.canCreateTransactions) {
+                                        onAddSettlement()
+                                    } else {
+                                        coroutineScope.launch { snackbarHostState.showSnackbar(strings.needSecondMemberMessage) }
+                                    }
+                                }
+                            ),
+                            QuickActionItem(
+                                label = strings.balancesAction,
+                                imageVector = Icons.Rounded.SwapHoriz,
+                                onClick = onOpenBalances
+                            )
                         ),
                         visible = contentVisible
+                    )
+                }
+            }
+            item {
+                AppAnimatedVisibility(visible = !uiState.canCreateTransactions) {
+                    AppInlineMessageCard(
+                        text = strings.needSecondMemberMessage,
+                        isError = false
                     )
                 }
             }
@@ -262,6 +308,7 @@ private fun SettlementCard(
 private data class QuickActionItem(
     val label: String,
     val imageVector: androidx.compose.ui.graphics.vector.ImageVector,
+    val enabled: Boolean = true,
     val onClick: () -> Unit,
 )
 
@@ -288,6 +335,7 @@ private fun QuickActionsGrid(actions: List<QuickActionItem>, visible: Boolean) {
                                 modifier = Modifier.fillMaxWidth(),
                                 label = action.label,
                                 imageVector = action.imageVector,
+                                enabled = action.enabled,
                                 onClick = action.onClick
                             )
                         }
@@ -306,6 +354,7 @@ private fun QuickActionCard(
     modifier: Modifier = Modifier,
     label: String,
     imageVector: androidx.compose.ui.graphics.vector.ImageVector,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     ElevatedCard(
@@ -325,15 +374,22 @@ private fun QuickActionCard(
         ) {
             Box(
                 modifier = Modifier
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), RoundedCornerShape(18.dp))
+                    .background(
+                        if (enabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                        RoundedCornerShape(18.dp)
+                    )
                     .padding(12.dp)
             ) {
-                Icon(imageVector, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Icon(
+                    imageVector,
+                    contentDescription = null,
+                    tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Text(
                 text = label,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )

@@ -44,7 +44,8 @@ class GroupDashboardViewModel @Inject constructor(
             summary = summary,
             members = members,
             expenses = expenses,
-            settlements = settlements
+            settlements = settlements,
+            canCreateTransactions = members.size >= 2,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GroupDashboardUiState())
 

@@ -1,5 +1,10 @@
 package com.encer.offlinesplitwise.domain
 
+import com.encer.offlinesplitwise.core.common.MessageKey
+import com.encer.offlinesplitwise.domain.model.ExpenseShare
+import com.encer.offlinesplitwise.domain.model.SplitType
+import com.encer.offlinesplitwise.domain.usecase.ValidateExpenseInputParams
+import com.encer.offlinesplitwise.domain.usecase.ValidateExpenseInputUseCase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -11,10 +16,12 @@ class ValidateExpenseInputUseCaseTest {
     @Test
     fun `exact split rejects mismatched shares`() {
         val validation = validator(
-            totalAmount = 700,
-            splitType = SplitType.EXACT,
-            payers = listOf(ExpenseShare("1", 700)),
-            shares = listOf(ExpenseShare("1", 300), ExpenseShare("2", 300))
+            ValidateExpenseInputParams(
+                totalAmount = 700,
+                splitType = SplitType.EXACT,
+                payers = listOf(ExpenseShare("1", 700)),
+                shares = listOf(ExpenseShare("1", 300), ExpenseShare("2", 300))
+            )
         )
 
         assertFalse(validation.isValid)
@@ -24,10 +31,12 @@ class ValidateExpenseInputUseCaseTest {
     @Test
     fun `equal split rejects invalid payer total`() {
         val validation = validator(
-            totalAmount = 900,
-            splitType = SplitType.EQUAL,
-            payers = listOf(ExpenseShare("1", 500), ExpenseShare("2", 200)),
-            shares = listOf(ExpenseShare("1", 0), ExpenseShare("2", 0), ExpenseShare("3", 0))
+            ValidateExpenseInputParams(
+                totalAmount = 900,
+                splitType = SplitType.EQUAL,
+                payers = listOf(ExpenseShare("1", 500), ExpenseShare("2", 200)),
+                shares = listOf(ExpenseShare("1", 0), ExpenseShare("2", 0), ExpenseShare("3", 0))
+            )
         )
 
         assertFalse(validation.isValid)
@@ -37,10 +46,12 @@ class ValidateExpenseInputUseCaseTest {
     @Test
     fun `exact split accepts valid manual shares`() {
         val validation = validator(
-            totalAmount = 900,
-            splitType = SplitType.EXACT,
-            payers = listOf(ExpenseShare("1", 600), ExpenseShare("2", 300)),
-            shares = listOf(ExpenseShare("1", 300), ExpenseShare("2", 300), ExpenseShare("3", 300))
+            ValidateExpenseInputParams(
+                totalAmount = 900,
+                splitType = SplitType.EXACT,
+                payers = listOf(ExpenseShare("1", 600), ExpenseShare("2", 300)),
+                shares = listOf(ExpenseShare("1", 300), ExpenseShare("2", 300), ExpenseShare("3", 300))
+            )
         )
 
         assertTrue(validation.isValid)

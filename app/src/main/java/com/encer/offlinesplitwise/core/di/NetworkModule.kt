@@ -35,14 +35,16 @@ object NetworkModule {
         authInterceptor: AuthInterceptor,
         @NetworkInspectionInterceptor networkInspectionInterceptor: Interceptor,
     ): OkHttpClient {
-        val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
-        }
-        return OkHttpClient.Builder()
+        val builder = OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
-            .addInterceptor(logging)
             .addInterceptor(networkInspectionInterceptor)
-            .build()
+        if (BuildConfig.DEBUG) {
+            val logging = HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BASIC
+            }
+            builder.addInterceptor(logging)
+        }
+        return builder.build()
     }
 
     @Provides

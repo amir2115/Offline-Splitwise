@@ -67,6 +67,7 @@ class GroupsViewModel @Inject constructor(
             invites = nextInvites,
             isLoading = hasSession && (nextInvitesLoading || (groups.isEmpty() && syncStatus.isSyncing)),
             canLeaveGroups = hasSession,
+            currentUserId = session?.userId,
             errorMessage = nextError,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GroupsUiState())
