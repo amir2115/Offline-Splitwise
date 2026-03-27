@@ -16,8 +16,13 @@ class CalculatorExpressionEvaluatorTest {
     }
 
     @Test
-    fun `rejects fractional results`() {
-        assertNull(evaluateCalculatorExpression("10/3"))
+    fun `rounds fractional results instead of rejecting them`() {
+        assertEquals(3, evaluateCalculatorExpression("10/3"))
+    }
+
+    @Test
+    fun `evaluates mixed multiply divide expressions with rounding`() {
+        assertEquals(378, evaluateCalculatorExpression("345*34/31"))
     }
 
     @Test

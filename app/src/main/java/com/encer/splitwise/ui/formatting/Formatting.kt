@@ -31,6 +31,20 @@ fun formatAmountCompact(amount: Int): String {
     return NumberFormat.getIntegerInstance(Locale.getDefault()).format(amount)
 }
 
+fun formatCalculatorDisplayValue(input: String): String? {
+    val normalized = normalizeAmountDigits(input)
+    if (normalized.isBlank()) return null
+
+    evaluateCalculatorExpression(normalized)?.let { result ->
+        return formatAmountCompact(result)
+    }
+
+    return normalized.toLongOrNull()
+        ?.takeIf { it in 0..Int.MAX_VALUE.toLong() }
+        ?.toInt()
+        ?.let(::formatAmountCompact)
+}
+
 fun formatDate(timestamp: Long): String {
     val formatter = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
     return formatter.format(Date(timestamp))
