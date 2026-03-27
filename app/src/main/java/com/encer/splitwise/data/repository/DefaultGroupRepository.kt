@@ -87,6 +87,11 @@ class DefaultGroupRepository @Inject constructor(
 
     override suspend fun leaveGroup(groupId: String) {
         val session = sessionRepository.currentSession()
+        val group = groupDao.getById(groupId) ?: return
+        if (session != null && group.userId == session.userId) {
+            deleteGroup(groupId)
+            return
+        }
         val current = if (session != null) {
             memberDao.getByGroupAndUserId(groupId, session.userId)
         } else {

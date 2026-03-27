@@ -3,6 +3,7 @@
 package com.encer.splitwise.features.groups
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -13,6 +14,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +28,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -34,8 +37,13 @@ import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.MailOutline
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,22 +56,28 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.encer.splitwise.ui.components.EmptyStateCard
 import com.encer.splitwise.ui.components.HeroCard
 import com.encer.splitwise.ui.components.NameDialog
+import com.encer.splitwise.ui.components.AppAnimatedSection
 import com.encer.splitwise.ui.components.appCardColors
 import com.encer.splitwise.ui.components.appOutlinedButtonColors
+import com.encer.splitwise.ui.components.appSectionEnter
 import com.encer.splitwise.ui.components.appTopBarColors
 import com.encer.splitwise.ui.formatting.formatDate
 import com.encer.splitwise.ui.localization.appStrings
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -110,6 +124,17 @@ internal fun GroupsContent(
     onRejectInvite: (String) -> Unit,
 ) {
     val strings = appStrings()
+    val focusManager = LocalFocusManager.current
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    val showSearch = uiState.groups.size > 4
+    val filteredGroups = remember(uiState.groups, searchQuery) {
+        val query = searchQuery.trim()
+        if (query.isBlank()) {
+            uiState.groups
+        } else {
+            uiState.groups.filter { it.name.contains(query, ignoreCase = true) }
+        }
+    }
 
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -130,6 +155,11 @@ internal fun GroupsContent(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 18.dp)
+                .pointerInput(showSearch) {
+                    if (showSearch) {
+                        detectTapGestures(onTap = { focusManager.clearFocus() })
+                    }
+                }
                 .animateContentSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -255,16 +285,44 @@ internal fun GroupsContent(
                     )
                 }
             }
-            items(uiState.groups, key = { it.id }) { group ->
-                ElevatedCard(
+            item {
+                AppAnimatedSection(visible = showSearch, enter = appSectionEnter(delayMillis = 40)) {
+                    GroupSearchField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = strings.searchGroupsLabel,
+                        onClear = { searchQuery = "" }
+                    )
+                }
+            }
+            if (!uiState.isLoading && filteredGroups.isEmpty()) {
+                item {
+                    EmptyStateCard(
+                        title = if (showSearch && searchQuery.isNotBlank()) strings.noSearchResultsTitle else strings.noGroupsTitle,
+                        subtitle = if (showSearch && searchQuery.isNotBlank()) strings.noSearchResultsSubtitle else strings.noGroupsSubtitle
+                    )
+                }
+            }
+            items(filteredGroups, key = { it.id }) { group ->
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateContentSize(),
                     shape = RoundedCornerShape(28.dp),
-                    colors = appCardColors(),
+                    colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)),
                     onClick = { onOpenGroup(group.id) }
                 ) {
-                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                                shape = RoundedCornerShape(28.dp)
+                            )
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
@@ -275,11 +333,19 @@ internal fun GroupsContent(
                             }
                             Spacer(Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(group.name, style = MaterialTheme.typography.titleLarge)
+                                Text(
+                                    group.name,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
                                 Text(formatDate(group.createdAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             IconButton(onClick = { onEditingGroupChange(group.id) }) {
-                                Icon(Icons.Rounded.Edit, contentDescription = strings.edit)
+                                Icon(
+                                    Icons.Rounded.Edit,
+                                    contentDescription = strings.edit,
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
                             }
                             IconButton(onClick = { onPendingGroupActionChange(group.id) }) {
                                 Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
@@ -378,10 +444,14 @@ private fun GroupActionDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (canLeave) {
-                    OutlinedButton(
+                    Button(
                         onClick = onLeaveGroup,
                         modifier = Modifier.fillMaxWidth(),
-                        colors = appOutlinedButtonColors()
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -391,7 +461,7 @@ private fun GroupActionDialog(
                             Text(
                                 strings.groupLeaveMessage,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onError.copy(alpha = 0.9f)
                             )
                         }
                     }
@@ -400,8 +470,12 @@ private fun GroupActionDialog(
                     OutlinedButton(
                         onClick = onDeleteForEveryone,
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(24.dp),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.04f),
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -419,12 +493,98 @@ private fun GroupActionDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+            TextButton(onClick = onDismiss) {
                 Text(strings.cancel, style = MaterialTheme.typography.labelLarge)
             }
         },
         dismissButton = {}
     )
+}
+
+@Composable
+private fun GroupSearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    onClear: () -> Unit,
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val floating = isFocused || value.isNotBlank()
+    val labelTop by animateDpAsState(targetValue = if (floating) 0.dp else 12.dp, label = "searchLabelTop")
+    val fieldTop by animateDpAsState(targetValue = if (floating) 21.dp else 0.dp, label = "searchFieldTop")
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        colors = appCardColors(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                        )
+                    )
+                )
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), CircleShape)
+                    .padding(10.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.Search,
+                    contentDescription = label,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                ) {
+                    Text(
+                        text = label,
+                        style = if (floating) MaterialTheme.typography.labelLarge else MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (floating) 1f else 0.78f),
+                        modifier = Modifier.padding(top = labelTop)
+                    )
+                    BasicTextField(
+                        value = value,
+                        onValueChange = onValueChange,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = fieldTop)
+                            .onFocusChanged { isFocused = it.isFocused },
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.titleMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        decorationBox = { innerTextField -> innerTextField() }
+                    )
+                }
+            }
+            if (value.isNotBlank()) {
+                IconButton(onClick = onClear) {
+                    Icon(
+                        Icons.Rounded.Close,
+                        contentDescription = label,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
