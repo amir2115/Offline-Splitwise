@@ -77,6 +77,7 @@ fun BalancesScreen(
 
     Scaffold(
         containerColor = Color.Transparent,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = { Text(strings.balancesOfGroup(uiState.group?.name.orEmpty()), style = MaterialTheme.typography.titleLarge) },

@@ -138,6 +138,7 @@ internal fun GroupsContent(
 
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = { Text(strings.appTitle, style = MaterialTheme.typography.titleLarge) },

@@ -51,6 +51,7 @@ fun ExpenseDetailScreen(
 
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = { Text(expense?.title ?: strings.expenseDetailsFallback, style = MaterialTheme.typography.titleLarge) },

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -161,11 +162,13 @@ fun SplitwiseApp() {
             } else {
                 Scaffold(
                     containerColor = Color.Transparent,
+                    contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     bottomBar = {
                         if (currentDestination?.route in topLevelRoutes) {
                             NavigationBar(
                                 containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
-                                tonalElevation = 0.dp
+                                tonalElevation = 0.dp,
+                                windowInsets = WindowInsets(0, 0, 0, 0)
                             ) {
                                 RootDestination.entries.forEach { destination ->
                                     NavigationBarItem(
@@ -206,7 +209,6 @@ fun SplitwiseApp() {
                         modifier = Modifier
                             .fillMaxSize()
                             .background(appBackgroundBrush(settings.themeMode == com.encer.splitwise.data.preferences.AppThemeMode.DARK))
-                            .padding(bottom = if (currentDestination?.route in topLevelRoutes) 8.dp else 0.dp)
                     ) {
                         NavHost(
                             navController = navController,

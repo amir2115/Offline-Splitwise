@@ -56,6 +56,7 @@ fun MembersScreen(groupId: String, onBack: () -> Unit) {
 
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = { Text(strings.membersOfGroup(uiState.group?.name.orEmpty()), style = MaterialTheme.typography.titleLarge) },
