@@ -17,26 +17,26 @@ fun propertyOrEnv(name: String, defaultValue: String): String = propertyOrEnv(na
 fun intPropertyOrEnv(name: String, defaultValue: Int): Int =
     propertyOrEnv(name)?.toIntOrNull() ?: defaultValue
 
-val releaseVersionCode = intPropertyOrEnv("OFFLINE_SPLITWISE_VERSION_CODE", 1)
-val releaseVersionName = propertyOrEnv("OFFLINE_SPLITWISE_VERSION_NAME", "1.0")
-val apiBaseUrl = propertyOrEnv("OFFLINE_SPLITWISE_API_BASE_URL", "https://api.splitwise.ir/api/v1")
+val releaseVersionCode = intPropertyOrEnv("SPLITWISE_VERSION_CODE", 1)
+val releaseVersionName = propertyOrEnv("SPLITWISE_VERSION_NAME", "1.0")
+val apiBaseUrl = propertyOrEnv("SPLITWISE_API_BASE_URL", "https://api.splitwise.ir/api/v1")
 val bazaarStoreUrl = propertyOrEnv(
-    "OFFLINE_SPLITWISE_BAZAAR_STORE_URL",
-    "https://cafebazaar.ir/app/com.encer.offlinesplitwise"
+    "SPLITWISE_BAZAAR_STORE_URL",
+    "https://cafebazaar.ir/app/com.encer.splitwise"
 )
 val myketStoreUrl = propertyOrEnv(
-    "OFFLINE_SPLITWISE_MYKET_STORE_URL",
-    "https://myket.ir/app/com.encer.offlinesplitwise"
+    "SPLITWISE_MYKET_STORE_URL",
+    "https://myket.ir/app/com.encer.splitwise"
 )
 val organicStoreUrl = propertyOrEnv(
-    "OFFLINE_SPLITWISE_ORGANIC_STORE_URL",
-    "https://splitwise.ir/downloads/offline-splitwise"
+    "SPLITWISE_ORGANIC_STORE_URL",
+    "https://splitwise.ir/downloads/splitwise"
 )
 
-val releaseStoreFile = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_STORE_FILE")
-val releaseStorePassword = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_STORE_PASSWORD")
-val releaseKeyAlias = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_KEY_ALIAS")
-val releaseKeyPassword = propertyOrEnv("OFFLINE_SPLITWISE_RELEASE_KEY_PASSWORD")
+val releaseStoreFile = propertyOrEnv("SPLITWISE_RELEASE_STORE_FILE")
+val releaseStorePassword = propertyOrEnv("SPLITWISE_RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = propertyOrEnv("SPLITWISE_RELEASE_KEY_ALIAS")
+val releaseKeyPassword = propertyOrEnv("SPLITWISE_RELEASE_KEY_PASSWORD")
 val hasReleaseSigning = listOf(
     releaseStoreFile,
     releaseStorePassword,
@@ -45,14 +45,14 @@ val hasReleaseSigning = listOf(
 ).all { !it.isNullOrBlank() }
 
 android {
-    namespace = "com.encer.offlinesplitwise"
+    namespace = "com.encer.splitwise"
     compileSdk {
         version = release(36)
     }
     flavorDimensions += "distribution"
 
     defaultConfig {
-        applicationId = "com.encer.offlinesplitwise"
+        applicationId = "com.encer.splitwise"
         minSdk = 24
         targetSdk = 36
         versionCode = releaseVersionCode

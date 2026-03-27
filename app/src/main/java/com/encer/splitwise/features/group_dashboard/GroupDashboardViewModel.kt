@@ -1,0 +1,63 @@
+package com.encer.splitwise.features.group_dashboard
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.encer.splitwise.domain.repository.ExpenseRepository
+import com.encer.splitwise.domain.repository.GroupRepository
+import com.encer.splitwise.domain.repository.MemberRepository
+import com.encer.splitwise.domain.repository.SettlementRepository
+import com.encer.splitwise.domain.usecase.ObserveGroupSummaryParams
+import com.encer.splitwise.domain.usecase.ObserveGroupSummaryUseCase
+import com.encer.splitwise.domain.usecase.canCreateTransaction
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+@HiltViewModel
+class GroupDashboardViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    groupRepository: GroupRepository,
+    memberRepository: MemberRepository,
+    expenseRepository: ExpenseRepository,
+    settlementRepository: SettlementRepository,
+    observeGroupSummaryUseCase: ObserveGroupSummaryUseCase
+) : ViewModel() {
+    private val groupId: String = checkNotNull(savedStateHandle["groupId"])
+
+    init {
+        viewModelScope.launch { memberRepository.ensureSelfMember(groupId) }
+    }
+
+    val uiState: StateFlow<GroupDashboardUiState> = combine(
+        groupRepository.observeGroups(),
+        observeGroupSummaryUseCase(ObserveGroupSummaryParams(groupId)),
+        memberRepository.observeMembers(groupId),
+        expenseRepository.observeExpenses(groupId),
+        settlementRepository.observeSettlements(groupId)
+    ) { groups, summary, members, expenses, settlements ->
+        GroupDashboardUiState(
+            group = groups.firstOrNull { it.id == groupId },
+            summary = summary,
+            members = members,
+            expenses = expenses,
+            settlements = settlements,
+            canCreateTransactions = canCreateTransaction(memberCount = members.size, isEdit = false),
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GroupDashboardUiState())
+
+    private val expenseRepositoryRef = expenseRepository
+    private val settlementRepositoryRef = settlementRepository
+
+    fun deleteExpense(expenseId: String) {
+        viewModelScope.launch { expenseRepositoryRef.deleteExpense(expenseId) }
+    }
+
+    fun deleteSettlement(settlementId: String) {
+        viewModelScope.launch { settlementRepositoryRef.deleteSettlement(settlementId) }
+    }
+}

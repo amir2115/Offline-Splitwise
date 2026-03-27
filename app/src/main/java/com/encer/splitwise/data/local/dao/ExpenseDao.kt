@@ -1,0 +1,34 @@
+package com.encer.splitwise.data.local.dao
+
+import androidx.room.Dao
+import androidx.room.Query
+import androidx.room.Upsert
+import com.encer.splitwise.data.local.entity.*
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface ExpenseDao {
+    @Query("SELECT * FROM expenses WHERE groupId = :groupId AND deletedAt IS NULL ORDER BY createdAt DESC")
+    fun observeExpenses(groupId: String): Flow<List<ExpenseEntity>>
+
+    @Query("SELECT * FROM expenses ORDER BY createdAt DESC")
+    suspend fun getAll(): List<ExpenseEntity>
+
+    @Query("SELECT * FROM expenses WHERE syncState = :syncState")
+    suspend fun getBySyncState(syncState: SyncState): List<ExpenseEntity>
+
+    @Query("SELECT * FROM expenses WHERE id = :expenseId LIMIT 1")
+    suspend fun getExpenseById(expenseId: String): ExpenseEntity?
+
+    @Upsert
+    suspend fun upsertExpense(expense: ExpenseEntity)
+
+    @Upsert
+    suspend fun upsertExpenses(expenses: List<ExpenseEntity>)
+
+    @Query("DELETE FROM expenses WHERE id = :expenseId")
+    suspend fun hardDeleteExpense(expenseId: String)
+
+    @Query("DELETE FROM expenses WHERE id IN (:expenseIds)")
+    suspend fun hardDeleteExpenses(expenseIds: List<String>)
+}

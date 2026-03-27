@@ -1,6 +1,6 @@
-# Offline Splitwise
+# Splitwise
 
-Offline Splitwise is an Android app for tracking shared expenses inside groups, recording settlements, and calculating who owes whom with a clean offline-first workflow.
+Splitwise is an Android app for tracking shared expenses inside groups, recording settlements, and calculating who owes whom with a clean offline-first workflow.
 
 The app is built with Kotlin, Jetpack Compose, and Room, and is designed to work fully offline with local persistence.
 
@@ -110,14 +110,14 @@ The project is split into three main layers:
 
 Main files:
 
-- [MainActivity.kt](app/src/main/java/com/encer/offlinesplitwise/MainActivity.kt)
-- [App.kt](app/src/main/java/com/encer/offlinesplitwise/ui/App.kt)
-- [Screens.kt](app/src/main/java/com/encer/offlinesplitwise/ui/Screens.kt)
-- [ViewModels.kt](app/src/main/java/com/encer/offlinesplitwise/ui/ViewModels.kt)
-- [UseCases.kt](app/src/main/java/com/encer/offlinesplitwise/domain/UseCases.kt)
-- [OfflineSplitwiseDatabase.kt](app/src/main/java/com/encer/offlinesplitwise/data/local/OfflineSplitwiseDatabase.kt)
-- [UserPreferences.kt](app/src/main/java/com/encer/offlinesplitwise/data/preferences/UserPreferences.kt)
-- [Theme.kt](app/src/main/java/com/encer/offlinesplitwise/ui/theme/Theme.kt)
+- [MainActivity.kt](app/src/main/java/com/encer/splitwise/MainActivity.kt)
+- [App.kt](app/src/main/java/com/encer/splitwise/ui/App.kt)
+- [Screens.kt](app/src/main/java/com/encer/splitwise/ui/Screens.kt)
+- [ViewModels.kt](app/src/main/java/com/encer/splitwise/ui/ViewModels.kt)
+- [UseCases.kt](app/src/main/java/com/encer/splitwise/domain/UseCases.kt)
+- [SplitwiseDatabase.kt](app/src/main/java/com/encer/splitwise/data/local/SplitwiseDatabase.kt)
+- [UserPreferences.kt](app/src/main/java/com/encer/splitwise/data/preferences/UserPreferences.kt)
+- [Theme.kt](app/src/main/java/com/encer/splitwise/ui/theme/Theme.kt)
 
 ## Balance calculation
 
@@ -174,7 +174,7 @@ Or open the project in Android Studio and run the `app` configuration.
 
 For fast visual checks during development, open the Compose previews defined in:
 
-- [app/src/debug/java/com/encer/offlinesplitwise/ui/preview/ResponsiveScreenPreviews.kt](app/src/debug/java/com/encer/offlinesplitwise/ui/preview/ResponsiveScreenPreviews.kt)
+- [app/src/debug/java/com/encer/splitwise/ui/preview/ResponsiveScreenPreviews.kt](app/src/debug/java/com/encer/splitwise/ui/preview/ResponsiveScreenPreviews.kt)
 
 These previews render the main screens in multiple sizes and themes without launching an emulator.
 
@@ -200,7 +200,7 @@ Useful commands:
 
 The smoke test coverage currently lives in:
 
-- [app/src/androidTest/java/com/encer/offlinesplitwise/ResponsiveSmokeTest.kt](app/src/androidTest/java/com/encer/offlinesplitwise/ResponsiveSmokeTest.kt)
+- [app/src/androidTest/java/com/encer/splitwise/ResponsiveSmokeTest.kt](app/src/androidTest/java/com/encer/splitwise/ResponsiveSmokeTest.kt)
 
 ## Release build
 
@@ -218,16 +218,16 @@ Relevant files:
 
 Release configuration can be injected with Gradle properties or environment variables:
 
-- `OFFLINE_SPLITWISE_VERSION_CODE`
-- `OFFLINE_SPLITWISE_VERSION_NAME`
-- `OFFLINE_SPLITWISE_API_BASE_URL`
-- `OFFLINE_SPLITWISE_BAZAAR_STORE_URL`
-- `OFFLINE_SPLITWISE_MYKET_STORE_URL`
-- `OFFLINE_SPLITWISE_ORGANIC_STORE_URL`
-- `OFFLINE_SPLITWISE_RELEASE_STORE_FILE`
-- `OFFLINE_SPLITWISE_RELEASE_STORE_PASSWORD`
-- `OFFLINE_SPLITWISE_RELEASE_KEY_ALIAS`
-- `OFFLINE_SPLITWISE_RELEASE_KEY_PASSWORD`
+- `SPLITWISE_VERSION_CODE`
+- `SPLITWISE_VERSION_NAME`
+- `SPLITWISE_API_BASE_URL`
+- `SPLITWISE_BAZAAR_STORE_URL`
+- `SPLITWISE_MYKET_STORE_URL`
+- `SPLITWISE_ORGANIC_STORE_URL`
+- `SPLITWISE_RELEASE_STORE_FILE`
+- `SPLITWISE_RELEASE_STORE_PASSWORD`
+- `SPLITWISE_RELEASE_KEY_ALIAS`
+- `SPLITWISE_RELEASE_KEY_PASSWORD`
 
 Store variants:
 
@@ -241,15 +241,15 @@ Example signed Bazaar release build:
 
 ```bash
 ./gradlew :app:assembleBazaarRelease \
-  -POFFLINE_SPLITWISE_VERSION_CODE=42 \
-  -POFFLINE_SPLITWISE_VERSION_NAME=1.4.0 \
-  -POFFLINE_SPLITWISE_BAZAAR_STORE_URL=https://cafebazaar.ir/app/com.encer.offlinesplitwise \
-  -POFFLINE_SPLITWISE_MYKET_STORE_URL=https://myket.ir/app/com.encer.offlinesplitwise \
-  -POFFLINE_SPLITWISE_ORGANIC_STORE_URL=https://splitwise.ir/downloads/offline-splitwise \
-  -POFFLINE_SPLITWISE_RELEASE_STORE_FILE=/absolute/path/release.keystore \
-  -POFFLINE_SPLITWISE_RELEASE_STORE_PASSWORD=changeit \
-  -POFFLINE_SPLITWISE_RELEASE_KEY_ALIAS=release \
-  -POFFLINE_SPLITWISE_RELEASE_KEY_PASSWORD=changeit
+  -PSPLITWISE_VERSION_CODE=42 \
+  -PSPLITWISE_VERSION_NAME=1.4.0 \
+  -PSPLITWISE_BAZAAR_STORE_URL=https://cafebazaar.ir/app/com.encer.splitwise \
+  -PSPLITWISE_MYKET_STORE_URL=https://myket.ir/app/com.encer.splitwise \
+  -PSPLITWISE_ORGANIC_STORE_URL=https://splitwise.ir/downloads/splitwise \
+  -PSPLITWISE_RELEASE_STORE_FILE=/absolute/path/release.keystore \
+  -PSPLITWISE_RELEASE_STORE_PASSWORD=changeit \
+  -PSPLITWISE_RELEASE_KEY_ALIAS=release \
+  -PSPLITWISE_RELEASE_KEY_PASSWORD=changeit
 ```
 
 If signing properties are missing, Gradle still builds unsigned release artifacts per store variant.
@@ -272,8 +272,8 @@ app/build/outputs/apk/organic/release/app-organic-release.apk
 
 Suggested release checklist:
 
-1. Set the final `OFFLINE_SPLITWISE_VERSION_CODE` and `OFFLINE_SPLITWISE_VERSION_NAME`.
-2. Point `OFFLINE_SPLITWISE_API_BASE_URL` at production.
+1. Set the final `SPLITWISE_VERSION_CODE` and `SPLITWISE_VERSION_NAME`.
+2. Point `SPLITWISE_API_BASE_URL` at production.
 3. Set both store URLs and publish each flavor to its own channel.
 4. Set the organic/site URL for direct downloads.
 5. Provide release keystore properties from CI secrets or local shell env.
@@ -299,8 +299,8 @@ These preferences are stored locally and restored when the app is opened again.
 
 ## App info
 
-- `applicationId`: `com.encer.offlinesplitwise`
+- `applicationId`: `com.encer.splitwise`
 - `minSdk`: `24`
 - `targetSdk`: `36`
-- `versionCode`: configurable with `OFFLINE_SPLITWISE_VERSION_CODE` (default `1`)
-- `versionName`: configurable with `OFFLINE_SPLITWISE_VERSION_NAME` (default `1.0`)
+- `versionCode`: configurable with `SPLITWISE_VERSION_CODE` (default `1`)
+- `versionName`: configurable with `SPLITWISE_VERSION_NAME` (default `1.0`)
