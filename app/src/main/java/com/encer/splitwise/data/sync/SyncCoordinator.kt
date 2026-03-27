@@ -90,7 +90,7 @@ class SyncCoordinator(
 
     suspend fun restoreSessionAndSync() {
         val session = sessionRepository.currentSession() ?: return
-        if (!networkMonitor.refreshApiReachability()) return
+        if (!networkMonitor.hasInternetConnection()) return
         runCatching { apiClient.me() }
             .onFailure {
                 if (it is ApiError && it.status == 401) {
@@ -132,7 +132,7 @@ class SyncCoordinator(
 
     suspend fun syncIfPossible() {
         sessionRepository.currentSession() ?: return
-        if (!networkMonitor.refreshApiReachability()) return
+        if (!networkMonitor.hasInternetConnection()) return
 
         syncMutex.withLock {
             _syncStatus.value = _syncStatus.value.copy(isSyncing = true, lastError = null)
@@ -172,7 +172,7 @@ class SyncCoordinator(
             )
             prepareLocalStateForAuthenticatedUser(session.userId)
             sessionRepository.saveSession(session)
-            if (networkMonitor.refreshApiReachability()) {
+            if (networkMonitor.hasInternetConnection()) {
                 runCatching {
                     if (hasAnyLocalData() && sessionRepository.observeLastSyncedAt().value == null) {
                         runInitialImportIfPossible()

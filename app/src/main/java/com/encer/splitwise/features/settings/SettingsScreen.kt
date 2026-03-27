@@ -56,7 +56,8 @@ fun SettingsScreen(
     sessionName: String?,
     sessionUsername: String?,
     canSync: Boolean,
-    isOnline: Boolean,
+    hasInternet: Boolean,
+    isApiReachable: Boolean,
     lastSyncedAt: Long?,
     syncError: String?,
     onLanguageSelected: (AppLanguage) -> Unit,
@@ -128,12 +129,12 @@ fun SettingsScreen(
                         SettingsStatusBadge(
                             text = when {
                                 !canSync -> strings.signInLabel
-                                isOnline -> strings.syncOnline
+                                hasInternet -> strings.syncOnline
                                 else -> strings.syncOffline
                             },
                             tone = when {
                                 !canSync -> MaterialTheme.colorScheme.outline
-                                isOnline -> MaterialTheme.colorScheme.primary
+                                hasInternet -> MaterialTheme.colorScheme.primary
                                 else -> MaterialTheme.colorScheme.error
                             }
                         )
@@ -142,24 +143,29 @@ fun SettingsScreen(
                 SettingsInfoCard(
                     headline = lastSyncedAt?.let { strings.lastSyncLabel(formatDate(it)) } ?: strings.notSyncedYet,
                     supporting = if (canSync) {
-                        if (syncError.isNullOrBlank()) strings.syncSubtitle else if (isOnline) strings.syncServerIssue else strings.syncConnectionIssue
+                        when {
+                            !hasInternet -> strings.syncConnectionIssue
+                            !isApiReachable -> strings.syncServerIssue
+                            !syncError.isNullOrBlank() -> strings.syncServerIssue
+                            else -> strings.syncSubtitle
+                        }
                     } else {
                         strings.syncLoginRequired
                     },
-                    supportingColor = if (canSync && !syncError.isNullOrBlank()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                    supportingColor = if (canSync && (!hasInternet || !isApiReachable || !syncError.isNullOrBlank())) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (canSync && !syncError.isNullOrBlank()) {
+                if (canSync && (!hasInternet || !isApiReachable || !syncError.isNullOrBlank())) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = if (isOnline) Icons.Rounded.CloudOff else Icons.Rounded.WifiOff,
+                            imageVector = if (hasInternet) Icons.Rounded.CloudOff else Icons.Rounded.WifiOff,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.error
                         )
                         Text(
-                            text = if (isOnline) strings.syncServerIssue else strings.syncConnectionIssue,
+                            text = if (hasInternet) strings.syncServerIssue else strings.syncConnectionIssue,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )

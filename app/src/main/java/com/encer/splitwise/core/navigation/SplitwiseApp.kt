@@ -75,6 +75,7 @@ fun SplitwiseApp() {
     val settings by appShellViewModel.settingsRepository.observeSettings().collectAsStateWithLifecycle()
     val session by appShellViewModel.sessionRepository.observeSession().collectAsStateWithLifecycle()
     val syncStatus by appShellViewModel.syncCoordinator.observeSyncStatus().collectAsStateWithLifecycle()
+    val networkStatus by appShellViewModel.networkMonitor.observeStatus().collectAsStateWithLifecycle()
     val updateState by appShellViewModel.appUpdateChecker.observeUpdateState().collectAsStateWithLifecycle()
     val context = LocalContext.current
     val strings = stringsFor(settings.language)
@@ -91,6 +92,12 @@ fun SplitwiseApp() {
     LaunchedEffect(session?.userId) {
         if (session != null) {
             appShellViewModel.syncCoordinator.requestSync()
+        }
+    }
+
+    LaunchedEffect(currentDestination?.route) {
+        if (currentDestination?.route == RootDestination.SETTINGS.route) {
+            appShellViewModel.refreshConnectionStatus()
         }
     }
 
@@ -216,7 +223,8 @@ fun SplitwiseApp() {
                                     sessionName = session?.name,
                                     sessionUsername = session?.username,
                                     canSync = session != null,
-                                    isOnline = session != null && appShellViewModel.syncCoordinator.isOnline(),
+                                    hasInternet = session != null && networkStatus.hasInternet,
+                                    isApiReachable = session != null && networkStatus.isApiReachable,
                                     lastSyncedAt = syncStatus.lastSyncedAt,
                                     syncError = syncStatus.lastError,
                                     onLanguageSelected = appShellViewModel.settingsRepository::updateLanguage,

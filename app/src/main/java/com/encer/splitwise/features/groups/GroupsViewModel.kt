@@ -41,6 +41,7 @@ class GroupsViewModel @Inject constructor(
                 .distinctUntilChanged()
                 .drop(1)
                 .collect {
+                    syncCoordinator.requestSync()
                     refreshInvites()
                 }
         }

@@ -19,6 +19,12 @@ class AppShellViewModel @Inject constructor(
     val networkMonitor: NetworkMonitor,
     val appUpdateChecker: AppUpdateChecker,
 ) : ViewModel() {
+    fun refreshConnectionStatus() {
+        viewModelScope.launch {
+            networkMonitor.refreshApiReachability()
+        }
+    }
+
     init {
         viewModelScope.launch {
             syncCoordinator.restoreSessionAndSync()
