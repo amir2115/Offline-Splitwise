@@ -88,32 +88,36 @@ class SyncCoordinator(
     fun isOnline(): Boolean = networkMonitor.isOnline()
     fun isApiReachable(): Boolean = networkMonitor.isApiAvailable()
 
-    suspend fun restoreSessionAndSync() {
+    suspend fun restoreSessionAndSync(forceNetworkRequest: Boolean = false) {
         val session = sessionRepository.currentSession() ?: return
-        if (!networkMonitor.hasInternetConnection()) return
-        runCatching { apiClient.me() }
+        if (!forceNetworkRequest && !networkMonitor.hasInternetConnection()) return
+        val remoteUser = runCatching { apiClient.me() }
             .onFailure {
                 if (it is ApiError && it.status == 401) {
                     sessionRepository.clearSession()
                     _syncStatus.value = SyncStatus(lastError = it.message, invalidMemberUsernames = emptyList())
                 }
             }
-            .onSuccess { remoteUser ->
-                prepareLocalStateForAuthenticatedUser(remoteUser.id)
-                sessionRepository.saveSession(
-                    session.copy(
-                        userId = remoteUser.id,
-                        name = remoteUser.name,
-                        username = remoteUser.username,
-                    )
-                )
-                syncIfPossible()
+            .getOrNull() ?: run {
+            if (sessionRepository.currentSession() != null) {
+                syncIfPossible(forceNetworkRequest = forceNetworkRequest)
             }
+            return
+        }
+        prepareLocalStateForAuthenticatedUser(remoteUser.id)
+        sessionRepository.saveSession(
+            session.copy(
+                userId = remoteUser.id,
+                name = remoteUser.name,
+                username = remoteUser.username,
+            )
+        )
+        syncIfPossible(forceNetworkRequest = forceNetworkRequest)
     }
 
-    fun requestSync() {
+    fun requestSync(forceNetworkRequest: Boolean = false) {
         scope.launch(Dispatchers.IO) {
-            syncIfPossible()
+            syncIfPossible(forceNetworkRequest = forceNetworkRequest)
         }
     }
 
@@ -130,9 +134,9 @@ class SyncCoordinator(
         _syncStatus.value = SyncStatus()
     }
 
-    suspend fun syncIfPossible() {
+    suspend fun syncIfPossible(forceNetworkRequest: Boolean = false) {
         sessionRepository.currentSession() ?: return
-        if (!networkMonitor.hasInternetConnection()) return
+        if (!forceNetworkRequest && !networkMonitor.hasInternetConnection()) return
 
         syncMutex.withLock {
             _syncStatus.value = _syncStatus.value.copy(isSyncing = true, lastError = null)
@@ -172,22 +176,6 @@ class SyncCoordinator(
             )
             prepareLocalStateForAuthenticatedUser(session.userId)
             sessionRepository.saveSession(session)
-            if (networkMonitor.hasInternetConnection()) {
-                runCatching {
-                    if (hasAnyLocalData() && sessionRepository.observeLastSyncedAt().value == null) {
-                        runInitialImportIfPossible()
-                    } else {
-                        performIncrementalSync()
-                    }
-                }.onFailure { error ->
-                    _syncStatus.value = _syncStatus.value.copy(
-                        isSyncing = false,
-                        lastSyncedAt = sessionRepository.observeLastSyncedAt().value,
-                        lastError = error.message ?: "Sync failed",
-                        invalidMemberUsernames = parseInvalidMemberIssues(error),
-                    )
-                }
-            }
             session
         }
     }

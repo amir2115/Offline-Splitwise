@@ -287,6 +287,13 @@ internal fun GroupsContent(
                 }
             }
             item {
+                Text(
+                    strings.groupsSectionTitle,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            item {
                 AppAnimatedSection(visible = showSearch, enter = appSectionEnter(delayMillis = 40)) {
                     GroupSearchField(
                         value = searchQuery,
@@ -353,11 +360,6 @@ internal fun GroupsContent(
                             }
                         }
                     }
-                }
-            }
-            if (uiState.groups.isEmpty() && !uiState.isLoading) {
-                item {
-                    EmptyStateCard(strings.noGroupsTitle, strings.noGroupsSubtitle)
                 }
             }
             item { Spacer(Modifier.padding(12.dp)) }

@@ -7,6 +7,7 @@ import com.encer.splitwise.data.local.db.SplitwiseDatabase
 import com.encer.splitwise.data.local.dao.SettlementDao
 import com.encer.splitwise.data.local.dao.SyncDao
 import com.encer.splitwise.data.local.dao.TransactionDao
+import com.encer.splitwise.data.preferences.HealthStatusRepository
 import com.encer.splitwise.data.preferences.SessionRepository
 import com.encer.splitwise.data.remote.network.ApiClient
 import com.encer.splitwise.data.sync.NetworkMonitor
@@ -32,8 +33,9 @@ object SyncModule {
     fun provideNetworkMonitor(
         @dagger.hilt.android.qualifiers.ApplicationContext context: android.content.Context,
         apiClient: ApiClient,
+        healthStatusRepository: HealthStatusRepository,
         applicationScope: CoroutineScope,
-    ): NetworkMonitor = NetworkMonitor(context, apiClient, applicationScope)
+    ): NetworkMonitor = NetworkMonitor(context, apiClient, healthStatusRepository, applicationScope)
 
     @Provides
     @Singleton

@@ -6,8 +6,12 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
@@ -75,6 +79,7 @@ fun SplitwiseApp() {
     val appShellViewModel: AppShellViewModel = appHiltViewModel()
     val settings by appShellViewModel.settingsRepository.observeSettings().collectAsStateWithLifecycle()
     val session by appShellViewModel.sessionRepository.observeSession().collectAsStateWithLifecycle()
+    val healthStatus by appShellViewModel.healthStatusRepository.observeState().collectAsStateWithLifecycle()
     val syncStatus by appShellViewModel.syncCoordinator.observeSyncStatus().collectAsStateWithLifecycle()
     val networkStatus by appShellViewModel.networkMonitor.observeStatus().collectAsStateWithLifecycle()
     val updateState by appShellViewModel.appUpdateChecker.observeUpdateState().collectAsStateWithLifecycle()
@@ -88,12 +93,6 @@ fun SplitwiseApp() {
 
     androidx.compose.runtime.LaunchedEffect(settings.language) {
         Locale.setDefault(Locale.forLanguageTag(settings.language.tag))
-    }
-
-    LaunchedEffect(session?.userId) {
-        if (session != null) {
-            appShellViewModel.syncCoordinator.requestSync()
-        }
     }
 
     LaunchedEffect(currentDestination?.route) {
@@ -119,11 +118,15 @@ fun SplitwiseApp() {
                     title = {
                         Text(
                             updateState.title
-                                ?: if (updateState.mode == AppUpdateMode.HARD) strings.updateRequiredTitle else strings.updateAvailableTitle
+                                ?: if (updateState.mode == AppUpdateMode.HARD) strings.updateRequiredTitle else strings.updateAvailableTitle,
+                            style = MaterialTheme.typography.titleLarge
                         )
                     },
                     text = {
-                        Text(updateState.message ?: strings.updateDefaultMessage)
+                        Text(
+                            updateState.message ?: strings.updateDefaultMessage,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     },
                     confirmButton = {
                         androidx.compose.material3.TextButton(
@@ -133,7 +136,7 @@ fun SplitwiseApp() {
                                 }
                             }
                         ) {
-                            Text(strings.updateNow)
+                            Text(strings.updateNow, style = MaterialTheme.typography.labelLarge)
                         }
                     },
                     dismissButton = {
@@ -141,7 +144,7 @@ fun SplitwiseApp() {
                             androidx.compose.material3.TextButton(
                                 onClick = appShellViewModel.appUpdateChecker::dismissSoftUpdate
                             ) {
-                                Text(strings.updateLater)
+                                Text(strings.updateLater, style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     }
@@ -151,24 +154,26 @@ fun SplitwiseApp() {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top))
                         .background(brush = appBackgroundBrush(settings.themeMode == com.encer.splitwise.data.preferences.AppThemeMode.DARK))
                 ) {
                     AuthScreen(
-                        onLogin = { username, password -> appShellViewModel.syncCoordinator.login(username, password) },
-                        onRegister = { name, username, password -> appShellViewModel.syncCoordinator.register(name, username, password) },
+                        onLogin = appShellViewModel::login,
+                        onRegister = appShellViewModel::register,
                         onContinueOffline = { guestMode = true }
                     )
                 }
             } else {
                 Scaffold(
                     containerColor = Color.Transparent,
-                    contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                    contentWindowInsets = WindowInsets.safeDrawing.only(
+                        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+                    ),
                     bottomBar = {
                         if (currentDestination?.route in topLevelRoutes) {
                             NavigationBar(
                                 containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
                                 tonalElevation = 0.dp,
-                                windowInsets = WindowInsets(0, 0, 0, 0)
                             ) {
                                 RootDestination.entries.forEach { destination ->
                                     NavigationBarItem(
@@ -225,14 +230,16 @@ fun SplitwiseApp() {
                                     sessionName = session?.name,
                                     sessionUsername = session?.username,
                                     canSync = session != null,
-                                    hasInternet = session != null && networkStatus.hasInternet,
+                                    hasInternet = session != null && (networkStatus.hasInternet || networkStatus.isApiReachable),
                                     isApiReachable = session != null && networkStatus.isApiReachable,
+                                    lastHealthWasSuccessful = healthStatus.isHealthy,
                                     lastSyncedAt = syncStatus.lastSyncedAt,
+                                    isSyncing = syncStatus.isSyncing,
                                     syncError = syncStatus.lastError,
                                     onLanguageSelected = appShellViewModel.settingsRepository::updateLanguage,
                                     onThemeSelected = appShellViewModel.settingsRepository::updateThemeMode,
                                     onSyncNow = {
-                                        if (session == null) guestMode = false else appShellViewModel.syncCoordinator.requestSync()
+                                        if (session == null) guestMode = false else appShellViewModel.syncCoordinator.requestSync(forceNetworkRequest = true)
                                     },
                                     onLogout = {
                                         guestMode = false

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import com.encer.splitwise.data.preferences.HealthStatusRepository
 import com.encer.splitwise.data.remote.network.ApiClient
 import javax.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
@@ -25,6 +26,7 @@ data class NetworkStatus(
 class NetworkMonitor @Inject constructor(
     context: Context,
     private val apiClient: ApiClient,
+    private val healthStatusRepository: HealthStatusRepository,
     private val scope: CoroutineScope,
 ) {
     private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -35,8 +37,8 @@ class NetworkMonitor @Inject constructor(
             observeConnectivity().collect { hasInternet ->
                 status.update { current ->
                     current.copy(
-                        hasInternet = hasInternet,
-                        isApiReachable = if (!hasInternet) false else current.isApiReachable,
+                        hasInternet = hasInternet || current.isApiReachable,
+                        isApiReachable = current.isApiReachable,
                     )
                 }
                 if (hasInternet) {
@@ -81,14 +83,18 @@ class NetworkMonitor @Inject constructor(
 
     fun isApiAvailable(): Boolean = status.value.isApiReachable
 
-    suspend fun refreshApiReachability(): Boolean {
+    suspend fun refreshApiReachability(forceRequest: Boolean = false): Boolean {
         val hasInternet = hasInternetConnection()
-        if (!hasInternet) {
-            status.value = NetworkStatus(hasInternet = false, isApiReachable = false)
+        if (!hasInternet && !forceRequest) {
+            val isHealthy = healthStatusRepository.currentState().isHealthy
+            status.value = NetworkStatus(hasInternet = isHealthy, isApiReachable = isHealthy)
             return false
         }
-        val reachable = runCatching { apiClient.health() }.isSuccess
-        status.value = NetworkStatus(hasInternet = true, isApiReachable = reachable)
+        val reachable = runCatching { apiClient.health() }
+            .onSuccess { healthStatusRepository.recordSuccess(it) }
+            .onFailure { healthStatusRepository.recordFailure(it.message) }
+            .isSuccess
+        status.value = NetworkStatus(hasInternet = hasInternet || reachable, isApiReachable = reachable)
         return reachable
     }
 }

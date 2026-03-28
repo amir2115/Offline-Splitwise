@@ -1,6 +1,7 @@
 package com.encer.splitwise.core.di
 
 import android.content.Context
+import com.encer.splitwise.data.preferences.HealthStatusRepository
 import com.encer.splitwise.data.preferences.SessionRepository
 import com.encer.splitwise.data.preferences.SettingsRepository
 import dagger.Module
@@ -20,4 +21,8 @@ object PreferencesModule {
     @Provides
     @Singleton
     fun provideSessionRepository(@ApplicationContext context: Context): SessionRepository = SessionRepository(context)
+
+    @Provides
+    @Singleton
+    fun provideHealthStatusRepository(@ApplicationContext context: Context): HealthStatusRepository = HealthStatusRepository(context)
 }

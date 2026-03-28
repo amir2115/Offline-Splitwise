@@ -12,12 +12,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Logout
@@ -29,6 +34,7 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.WifiOff
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -58,7 +64,9 @@ fun SettingsScreen(
     canSync: Boolean,
     hasInternet: Boolean,
     isApiReachable: Boolean,
+    lastHealthWasSuccessful: Boolean,
     lastSyncedAt: Long?,
+    isSyncing: Boolean,
     syncError: String?,
     onLanguageSelected: (AppLanguage) -> Unit,
     onThemeSelected: (AppThemeMode) -> Unit,
@@ -67,9 +75,24 @@ fun SettingsScreen(
     onSignIn: () -> Unit,
 ) {
     val strings = appStrings()
+    val effectiveOnline = lastHealthWasSuccessful || isApiReachable || hasInternet
+    val syncSupportingText = when {
+        !canSync -> strings.syncLoginRequired
+        isSyncing -> strings.syncInProgress
+        !syncError.isNullOrBlank() -> syncError
+        !effectiveOnline -> strings.syncConnectionIssue
+        !isApiReachable && !lastHealthWasSuccessful -> strings.syncServerIssue
+        else -> strings.syncSubtitle
+    }
+    val syncSupportingColor = if (canSync && (isSyncing || !effectiveOnline || !syncError.isNullOrBlank() || (!isApiReachable && !lastHealthWasSuccessful))) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
             .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 24.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -129,12 +152,12 @@ fun SettingsScreen(
                         SettingsStatusBadge(
                             text = when {
                                 !canSync -> strings.signInLabel
-                                hasInternet -> strings.syncOnline
+                                effectiveOnline -> strings.syncOnline
                                 else -> strings.syncOffline
                             },
                             tone = when {
                                 !canSync -> MaterialTheme.colorScheme.outline
-                                hasInternet -> MaterialTheme.colorScheme.primary
+                                effectiveOnline -> MaterialTheme.colorScheme.primary
                                 else -> MaterialTheme.colorScheme.error
                             }
                         )
@@ -142,41 +165,27 @@ fun SettingsScreen(
                 )
                 SettingsInfoCard(
                     headline = lastSyncedAt?.let { strings.lastSyncLabel(formatDate(it)) } ?: strings.notSyncedYet,
-                    supporting = if (canSync) {
-                        when {
-                            !hasInternet -> strings.syncConnectionIssue
-                            !isApiReachable -> strings.syncServerIssue
-                            !syncError.isNullOrBlank() -> strings.syncServerIssue
-                            else -> strings.syncSubtitle
-                        }
-                    } else {
-                        strings.syncLoginRequired
-                    },
-                    supportingColor = if (canSync && (!hasInternet || !isApiReachable || !syncError.isNullOrBlank())) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                    supporting = syncSupportingText,
+                    supportingColor = syncSupportingColor
                 )
-                if (canSync && (!hasInternet || !isApiReachable || !syncError.isNullOrBlank())) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = if (hasInternet) Icons.Rounded.CloudOff else Icons.Rounded.WifiOff,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                        Text(
-                            text = if (hasInternet) strings.syncServerIssue else strings.syncConnectionIssue,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
                 OutlinedButton(
                     onClick = if (canSync) onSyncNow else onSignIn,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = appOutlinedButtonColors()
+                    colors = appOutlinedButtonColors(),
+                    enabled = !isSyncing
                 ) {
-                    Text(if (canSync) strings.syncNow else strings.signInLabel, style = MaterialTheme.typography.labelLarge)
+                    if (canSync && isSyncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.size(8.dp))
+                    }
+                    Text(
+                        if (!canSync) strings.signInLabel else if (isSyncing) strings.syncInProgress else strings.syncNow,
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
         }

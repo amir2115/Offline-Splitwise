@@ -3,6 +3,7 @@ package com.encer.splitwise.data.update
 import android.content.Context
 import androidx.core.content.pm.PackageInfoCompat
 import com.encer.splitwise.BuildConfig
+import com.encer.splitwise.data.preferences.HealthStatusRepository
 import com.encer.splitwise.data.remote.network.ApiClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -29,13 +30,17 @@ data class AppUpdateState(
 class AppUpdateChecker @Inject constructor(
     @ApplicationContext private val context: Context,
     private val apiClient: ApiClient,
+    private val healthStatusRepository: HealthStatusRepository,
 ) {
     private val _updateState = MutableStateFlow(AppUpdateState())
 
     fun observeUpdateState(): StateFlow<AppUpdateState> = _updateState
 
     suspend fun refreshUpdatePolicy() {
-        val payload = runCatching { apiClient.health() }.getOrNull() ?: return
+        val payload = runCatching { apiClient.health() }
+            .onSuccess { healthStatusRepository.recordSuccess(it) }
+            .onFailure { healthStatusRepository.recordFailure(it.message) }
+            .getOrNull() ?: return
         val currentVersionCode = PackageInfoCompat.getLongVersionCode(
             context.packageManager.getPackageInfo(context.packageName, 0)
         ).toInt()
