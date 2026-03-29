@@ -32,7 +32,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -50,6 +49,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.encer.splitwise.ui.components.appBackgroundBrush
 import com.encer.splitwise.ui.localization.LocalAppLanguage
 import com.encer.splitwise.ui.localization.LocalAppStrings
 import com.encer.splitwise.ui.components.appHiltViewModel
@@ -353,13 +353,3 @@ private fun AppSystemBars(darkTheme: Boolean) {
         }
     }
 }
-
-@Composable
-private fun appBackgroundBrush(isDark: Boolean): Brush =
-    Brush.verticalGradient(
-        colors = if (isDark) {
-            listOf(Color(0xFF0D1719), Color(0xFF112226), Color(0xFF142A2F))
-        } else {
-            listOf(Color(0xFFF9FBF2), Color(0xFFF0F6F6), Color(0xFFFFF8EF))
-        }
-    )

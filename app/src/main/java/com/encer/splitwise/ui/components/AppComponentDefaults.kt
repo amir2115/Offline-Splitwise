@@ -4,6 +4,7 @@ package com.encer.splitwise.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -14,14 +15,19 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import com.encer.splitwise.ui.formatting.GroupedNumberVisualTransformation
 
 val amountVisualTransformation = GroupedNumberVisualTransformation()
 
 @Composable
+fun appBlendOverBackground(color: Color, alpha: Float): Color =
+    color.copy(alpha = alpha).compositeOver(MaterialTheme.colorScheme.background)
+
+@Composable
 fun appTopBarColors() = TopAppBarDefaults.topAppBarColors(
-    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+    containerColor = appBlendOverBackground(MaterialTheme.colorScheme.surface, alpha = 0.96f),
     titleContentColor = MaterialTheme.colorScheme.onSurface,
     navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
     actionIconContentColor = MaterialTheme.colorScheme.primary
@@ -29,13 +35,13 @@ fun appTopBarColors() = TopAppBarDefaults.topAppBarColors(
 
 @Composable
 fun appCardColors() = CardDefaults.elevatedCardColors(
-    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+    containerColor = appBlendOverBackground(MaterialTheme.colorScheme.surface, alpha = 0.94f),
     contentColor = MaterialTheme.colorScheme.onSurface
 )
 
 @Composable
 fun appPlainCardColors() = CardDefaults.cardColors(
-    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+    containerColor = appBlendOverBackground(MaterialTheme.colorScheme.surface, alpha = 0.96f),
     contentColor = MaterialTheme.colorScheme.onSurface
 )
 
@@ -67,7 +73,7 @@ fun appFilterChipColors() = FilterChipDefaults.filterChipColors(
 
 @Composable
 fun appAssistChipColors() = AssistChipDefaults.assistChipColors(
-    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.16f),
+    containerColor = appBlendOverBackground(MaterialTheme.colorScheme.surface, alpha = 0.16f),
     labelColor = MaterialTheme.colorScheme.onSurface,
     leadingIconContentColor = MaterialTheme.colorScheme.primary,
     trailingIconContentColor = MaterialTheme.colorScheme.primary
@@ -100,9 +106,9 @@ fun appSwitchColors() = SwitchDefaults.colors(
 fun appHeroAccentSurface(): Color {
     val scheme = MaterialTheme.colorScheme
     return if (scheme.background.luminance() > 0.5f) {
-        scheme.primary.copy(alpha = 0.06f)
+        appBlendOverBackground(scheme.primary, alpha = 0.06f)
     } else {
-        scheme.primary.copy(alpha = 0.08f)
+        appBlendOverBackground(scheme.primary, alpha = 0.08f)
     }
 }
 
@@ -110,8 +116,17 @@ fun appHeroAccentSurface(): Color {
 fun appHeroIconContainerColor(): Color {
     val scheme = MaterialTheme.colorScheme
     return if (scheme.background.luminance() > 0.5f) {
-        scheme.surface.copy(alpha = 0.82f)
+        scheme.surface.copy(alpha = 0.82f).compositeOver(appHeroAccentSurface())
     } else {
-        scheme.surface.copy(alpha = 0.18f)
+        scheme.surface.copy(alpha = 0.18f).compositeOver(appHeroAccentSurface())
     }
 }
+
+fun appBackgroundBrush(isDark: Boolean): Brush =
+    Brush.verticalGradient(
+        colors = if (isDark) {
+            listOf(Color(0xFF0D1719), Color(0xFF112226), Color(0xFF142A2F))
+        } else {
+            listOf(Color(0xFFF9FBF2), Color(0xFFF0F6F6), Color(0xFFFFF8EF))
+        }
+    )

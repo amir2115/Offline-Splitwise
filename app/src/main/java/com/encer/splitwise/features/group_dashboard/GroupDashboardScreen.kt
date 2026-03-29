@@ -64,6 +64,8 @@ import com.encer.splitwise.ui.components.AppInlineMessageCard
 import com.encer.splitwise.ui.components.DashboardHeroCard
 import com.encer.splitwise.ui.components.EmptyStateCard
 import com.encer.splitwise.ui.components.SectionHeader
+import com.encer.splitwise.ui.components.appBackgroundBrush
+import com.encer.splitwise.ui.components.appBlendOverBackground
 import com.encer.splitwise.ui.components.appAssistChipColors
 import com.encer.splitwise.ui.components.appCardColors
 import com.encer.splitwise.ui.components.appHeroSectionEnter
@@ -144,121 +146,127 @@ internal fun GroupDashboardContent(
             )
         }
     ) { padding ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .background(appBackgroundBrush(isDark = MaterialTheme.colorScheme.background.luminance() <= 0.5f))
         ) {
-            item {
-                AppAnimatedSection(visible = contentVisible, enter = appHeroSectionEnter()) {
-                    DashboardHeroCard(
-                        title = strings.groupOverviewTitle,
-                        subtitle = strings.groupOverviewSubtitle,
-                        icon = { Icon(Icons.AutoMirrored.Rounded.ReceiptLong, contentDescription = null) }
-                    )
-                }
-            }
-            item {
-                AppAnimatedSection(visible = contentVisible, enter = appSectionEnter(delayMillis = 70)) {
-                    SummaryGrid(
-                        items = listOf(
-                            strings.totalExpenseLabel to formatAmount(uiState.summary.totalExpenses),
-                            strings.membersLabel to formatAmountCompact(uiState.summary.membersCount),
-                            strings.settlementsLabel to formatAmount(uiState.summary.totalSettlements),
-                            strings.openBalancesLabel to formatAmountCompact(uiState.summary.openBalancesCount)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    AppAnimatedSection(visible = contentVisible, enter = appHeroSectionEnter()) {
+                        DashboardHeroCard(
+                            title = strings.groupOverviewTitle,
+                            subtitle = strings.groupOverviewSubtitle,
+                            icon = { Icon(Icons.AutoMirrored.Rounded.ReceiptLong, contentDescription = null) }
                         )
-                    )
+                    }
                 }
-            }
-            item {
-                AppAnimatedSection(visible = contentVisible, enter = appHeroSectionEnter(delayMillis = 120)) {
-                    QuickActionsGrid(
-                        actions = listOf(
-                            QuickActionItem(
-                                label = strings.membersAction,
-                                imageVector = Icons.Rounded.PersonAddAlt,
-                                onClick = onOpenMembers
-                            ),
-                            QuickActionItem(
-                                label = strings.newExpenseAction,
-                                imageVector = Icons.Rounded.Add,
-                                enabled = uiState.canCreateTransactions,
-                                onClick = {
-                                    if (uiState.canCreateTransactions) {
-                                        onAddExpense()
-                                    } else {
-                                        coroutineScope.launch { snackbarHostState.showSnackbar(strings.needSecondMemberMessage) }
-                                    }
-                                }
-                            ),
-                            QuickActionItem(
-                                label = strings.addSettlementAction,
-                                imageVector = Icons.Rounded.Payments,
-                                enabled = uiState.canCreateTransactions,
-                                onClick = {
-                                    if (uiState.canCreateTransactions) {
-                                        onAddSettlement()
-                                    } else {
-                                        coroutineScope.launch { snackbarHostState.showSnackbar(strings.needSecondMemberMessage) }
-                                    }
-                                }
-                            ),
-                            QuickActionItem(
-                                label = strings.balancesAction,
-                                imageVector = Icons.Rounded.SwapHoriz,
-                                onClick = onOpenBalances
+                item {
+                    AppAnimatedSection(visible = contentVisible, enter = appSectionEnter(delayMillis = 70)) {
+                        SummaryGrid(
+                            items = listOf(
+                                strings.totalExpenseLabel to formatAmount(uiState.summary.totalExpenses),
+                                strings.membersLabel to formatAmountCompact(uiState.summary.membersCount),
+                                strings.settlementsLabel to formatAmount(uiState.summary.totalSettlements),
+                                strings.openBalancesLabel to formatAmountCompact(uiState.summary.openBalancesCount)
                             )
-                        ),
-                        visible = contentVisible
+                        )
+                    }
+                }
+                item {
+                    AppAnimatedSection(visible = contentVisible, enter = appHeroSectionEnter(delayMillis = 120)) {
+                        QuickActionsGrid(
+                            actions = listOf(
+                                QuickActionItem(
+                                    label = strings.membersAction,
+                                    imageVector = Icons.Rounded.PersonAddAlt,
+                                    onClick = onOpenMembers
+                                ),
+                                QuickActionItem(
+                                    label = strings.newExpenseAction,
+                                    imageVector = Icons.Rounded.Add,
+                                    enabled = uiState.canCreateTransactions,
+                                    onClick = {
+                                        if (uiState.canCreateTransactions) {
+                                            onAddExpense()
+                                        } else {
+                                            coroutineScope.launch { snackbarHostState.showSnackbar(strings.needSecondMemberMessage) }
+                                        }
+                                    }
+                                ),
+                                QuickActionItem(
+                                    label = strings.addSettlementAction,
+                                    imageVector = Icons.Rounded.Payments,
+                                    enabled = uiState.canCreateTransactions,
+                                    onClick = {
+                                        if (uiState.canCreateTransactions) {
+                                            onAddSettlement()
+                                        } else {
+                                            coroutineScope.launch { snackbarHostState.showSnackbar(strings.needSecondMemberMessage) }
+                                        }
+                                    }
+                                ),
+                                QuickActionItem(
+                                    label = strings.balancesAction,
+                                    imageVector = Icons.Rounded.SwapHoriz,
+                                    onClick = onOpenBalances
+                                )
+                            ),
+                            visible = contentVisible
+                        )
+                    }
+                }
+                item {
+                    AppAnimatedVisibility(visible = !uiState.canCreateTransactions) {
+                        AppInlineMessageCard(
+                            text = strings.needSecondMemberMessage,
+                            isError = false
+                        )
+                    }
+                }
+                item {
+                    AppAnimatedSection(visible = contentVisible, enter = appSectionEnter(delayMillis = 170)) {
+                        SectionHeader(strings.recentExpensesTitle)
+                    }
+                }
+                items(uiState.expenses.take(8), key = { it.id }) { expense ->
+                    ExpenseCard(
+                        expense = expense,
+                        members = uiState.members,
+                        onClick = { onOpenExpense(expense.id) }
                     )
                 }
-            }
-            item {
-                AppAnimatedVisibility(visible = !uiState.canCreateTransactions) {
-                    AppInlineMessageCard(
-                        text = strings.needSecondMemberMessage,
-                        isError = false
+                item {
+                    AppAnimatedVisibility(visible = uiState.expenses.isEmpty()) {
+                        EmptyStateCard(strings.noExpensesTitle, strings.noExpensesSubtitle)
+                    }
+                }
+                item {
+                    AppAnimatedSection(visible = contentVisible, enter = appSectionEnter(delayMillis = 210)) {
+                        SectionHeader(strings.recentSettlementsTitle)
+                    }
+                }
+                items(uiState.settlements.take(8), key = { it.id }) { settlement ->
+                    SettlementCard(
+                        settlement = settlement,
+                        members = uiState.members,
+                        onEdit = { onEditSettlement(settlement.id) },
+                        onDelete = { onDeleteSettlement(settlement.id) }
                     )
                 }
-            }
-            item {
-                AppAnimatedSection(visible = contentVisible, enter = appSectionEnter(delayMillis = 170)) {
-                    SectionHeader(strings.recentExpensesTitle)
+                item {
+                    AppAnimatedVisibility(visible = uiState.settlements.isEmpty()) {
+                        EmptyStateCard(strings.noSettlementsTitle, strings.noSettlementsSubtitle)
+                    }
                 }
+                item { Spacer(Modifier.height(24.dp)) }
             }
-            items(uiState.expenses.take(8), key = { it.id }) { expense ->
-                ExpenseCard(
-                    expense = expense,
-                    members = uiState.members,
-                    onClick = { onOpenExpense(expense.id) }
-                )
-            }
-            item {
-                AppAnimatedVisibility(visible = uiState.expenses.isEmpty()) {
-                    EmptyStateCard(strings.noExpensesTitle, strings.noExpensesSubtitle)
-                }
-            }
-            item {
-                AppAnimatedSection(visible = contentVisible, enter = appSectionEnter(delayMillis = 210)) {
-                    SectionHeader(strings.recentSettlementsTitle)
-                }
-            }
-            items(uiState.settlements.take(8), key = { it.id }) { settlement ->
-                SettlementCard(
-                    settlement = settlement,
-                    members = uiState.members,
-                    onEdit = { onEditSettlement(settlement.id) },
-                    onDelete = { onDeleteSettlement(settlement.id) }
-                )
-            }
-            item {
-                AppAnimatedVisibility(visible = uiState.settlements.isEmpty()) {
-                    EmptyStateCard(strings.noSettlementsTitle, strings.noSettlementsSubtitle)
-                }
-            }
-            item { Spacer(Modifier.height(24.dp)) }
         }
     }
 }
@@ -443,7 +451,8 @@ private fun SummaryGrid(items: List<Pair<String, String>>) {
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                            containerColor = appBlendOverBackground(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
                                 alpha = if (MaterialTheme.colorScheme.background.luminance() > 0.5f) 0.82f else 0.9f
                             ),
                             contentColor = MaterialTheme.colorScheme.onSurface
