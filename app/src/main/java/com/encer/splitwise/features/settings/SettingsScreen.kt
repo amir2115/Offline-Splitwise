@@ -75,11 +75,11 @@ fun SettingsScreen(
     onSignIn: () -> Unit,
 ) {
     val strings = appStrings()
-    val effectiveOnline = lastHealthWasSuccessful || isApiReachable || hasInternet
+    val effectiveOnline = lastHealthWasSuccessful || isApiReachable
     val syncSupportingText = when {
         !canSync -> strings.syncLoginRequired
         isSyncing -> strings.syncInProgress
-        !syncError.isNullOrBlank() -> syncError
+        !syncError.isNullOrBlank() -> if (effectiveOnline) strings.syncServerIssue else strings.syncConnectionIssue
         !effectiveOnline -> strings.syncConnectionIssue
         !isApiReachable && !lastHealthWasSuccessful -> strings.syncServerIssue
         else -> strings.syncSubtitle

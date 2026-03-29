@@ -37,8 +37,8 @@ class NetworkMonitor @Inject constructor(
             observeConnectivity().collect { hasInternet ->
                 status.update { current ->
                     current.copy(
-                        hasInternet = hasInternet || current.isApiReachable,
-                        isApiReachable = current.isApiReachable,
+                        hasInternet = hasInternet,
+                        isApiReachable = if (hasInternet) current.isApiReachable else false,
                     )
                 }
                 if (hasInternet) {
@@ -86,15 +86,14 @@ class NetworkMonitor @Inject constructor(
     suspend fun refreshApiReachability(forceRequest: Boolean = false): Boolean {
         val hasInternet = hasInternetConnection()
         if (!hasInternet && !forceRequest) {
-            val isHealthy = healthStatusRepository.currentState().isHealthy
-            status.value = NetworkStatus(hasInternet = isHealthy, isApiReachable = isHealthy)
+            status.value = NetworkStatus(hasInternet = false, isApiReachable = false)
             return false
         }
         val reachable = runCatching { apiClient.health() }
             .onSuccess { healthStatusRepository.recordSuccess(it) }
             .onFailure { healthStatusRepository.recordFailure(it.message) }
             .isSuccess
-        status.value = NetworkStatus(hasInternet = hasInternet || reachable, isApiReachable = reachable)
+        status.value = NetworkStatus(hasInternet = hasInternet, isApiReachable = reachable)
         return reachable
     }
 }

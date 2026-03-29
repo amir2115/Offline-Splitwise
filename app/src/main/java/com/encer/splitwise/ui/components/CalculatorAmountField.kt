@@ -155,54 +155,54 @@ private fun CalculatorBottomSheet(
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
-                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f),
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f),
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                                )
                             )
                         )
-                    )
-                    .padding(horizontal = 18.dp, vertical = 20.dp)
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalAlignment = Alignment.End
+                        .padding(horizontal = 18.dp, vertical = 20.dp)
                 ) {
-                    Text(
-                        text = strings.calculatorExpressionLabel,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = displayValue,
-                        style = MaterialTheme.typography.headlineLarge.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            textDirection = TextDirection.Ltr
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.End,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Text(
-                        text = if (showExpressionPreview) expression else "",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            textDirection = TextDirection.Ltr
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Start,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            text = strings.calculatorExpressionLabel,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = displayValue,
+                            style = MaterialTheme.typography.headlineLarge.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                textDirection = TextDirection.Ltr
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = if (showExpressionPreview) expression else "",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                textDirection = TextDirection.Ltr
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
-            }
 
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                 OutlinedTextField(
                     value = expressionField,
                     onValueChange = {
@@ -219,6 +219,82 @@ private fun CalculatorBottomSheet(
                         textAlign = TextAlign.Start
                     )
                 )
+
+                buttons.forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        row.forEach { token ->
+                            CalculatorKeyButton(
+                                token = token,
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    when (token) {
+                                        "C" -> {
+                                            expressionField = TextFieldValue("")
+                                            error = null
+                                        }
+
+                                        "⌫" -> {
+                                            expressionField = removeTokenAtSelection(expressionField)
+                                            error = null
+                                        }
+
+                                        "=" -> {
+                                            val result = resolveCalculatorSubmission(expression)
+                                            if (result == null) {
+                                                error = strings.calculatorInvalidExpression
+                                            } else {
+                                                expressionField = TextFieldValue(
+                                                    text = result,
+                                                    selection = androidx.compose.ui.text.TextRange(result.length)
+                                                )
+                                                error = null
+                                            }
+                                        }
+
+                                        else -> {
+                                            expressionField = insertTokenAtSelection(expressionField, token)
+                                            error = null
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(22.dp)
+                    ) {
+                        Text(strings.cancel, style = MaterialTheme.typography.labelLarge)
+                    }
+                    Button(
+                        onClick = {
+                            val result = resolveCalculatorSubmission(expression)
+                            if (result == null) {
+                                error = strings.calculatorInvalidExpression
+                            } else {
+                                onConfirm(result)
+                            }
+                        },
+                        modifier = Modifier.weight(1.5f),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
+                        Text(strings.calculatorUseAction, style = MaterialTheme.typography.labelLarge)
+                    }
+                }
             }
 
             if (error != null) {
@@ -235,81 +311,6 @@ private fun CalculatorBottomSheet(
                 }
             }
 
-            buttons.forEach { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    row.forEach { token ->
-                        CalculatorKeyButton(
-                            token = token,
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                when (token) {
-                                    "C" -> {
-                                        expressionField = TextFieldValue("")
-                                        error = null
-                                    }
-
-                                    "⌫" -> {
-                                        expressionField = removeTokenAtSelection(expressionField)
-                                        error = null
-                                    }
-
-                                    "=" -> {
-                                        val result = resolveCalculatorSubmission(expression)
-                                        if (result == null) {
-                                            error = strings.calculatorInvalidExpression
-                                        } else {
-                                            expressionField = TextFieldValue(
-                                                text = result,
-                                                selection = androidx.compose.ui.text.TextRange(result.length)
-                                            )
-                                            error = null
-                                        }
-                                    }
-
-                                    else -> {
-                                        expressionField = insertTokenAtSelection(expressionField, token)
-                                        error = null
-                                    }
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(22.dp)
-                ) {
-                    Text(strings.cancel, style = MaterialTheme.typography.labelLarge)
-                }
-                Button(
-                    onClick = {
-                        val result = resolveCalculatorSubmission(expression)
-                        if (result == null) {
-                            error = strings.calculatorInvalidExpression
-                        } else {
-                            onConfirm(result)
-                        }
-                    },
-                    modifier = Modifier.weight(1.5f),
-                    shape = RoundedCornerShape(22.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text(strings.calculatorUseAction, style = MaterialTheme.typography.labelLarge)
-                }
-            }
         }
     }
 }
