@@ -136,10 +136,38 @@ data class AppStrings(
     val payersTitle: String,
     val sharesTitle: String,
     val paidHowMuchLabel: String,
+    val paidHowMuchHint: String,
     val payFullAmountLabel: String,
     val clearAmountLabel: String,
-    val shareAmountLabel: String,
-    val equalShareLabel: String,
+    val baseShareLabel: String,
+    val shareAmountHint: String,
+    val equalBaseShareLabel: String,
+    val expenseSummaryTitle: String,
+    val enteredPayersTitle: String,
+    val remainingPayersTitle: String,
+    val enteredSharesTitle: String,
+    val remainingSharesTitle: String,
+    val finalSharesTitle: String,
+    val payerRemainingHintLabel: String,
+    val shareRemainingHintLabel: String,
+    val taxToggleTitle: String,
+    val taxToggleSubtitle: String,
+    val taxPercentLabel: String,
+    val taxAmountLabel: String,
+    val taxBreakdownTitle: String,
+    val baseAmountLabel: String,
+    val taxShareLabel: String,
+    val serviceChargeShareLabel: String,
+    val finalShareLabel: String,
+    val serviceChargesTitle: String,
+    val serviceChargesSubtitle: String,
+    val addServiceChargeLabel: String,
+    val serviceChargeNameLabel: String,
+    val serviceChargeAmountLabel: String,
+    val serviceChargeMembersLabel: String,
+    val serviceChargeHint: String,
+    val serviceChargesTotalLabel: String,
+    val completeExpenseForm: String,
     val calculatorTitle: String,
     val calculatorExpressionLabel: String,
     val calculatorInvalidExpression: String,
@@ -210,6 +238,36 @@ data class AppStrings(
     fun groupActionDialogTitle(groupName: String): String =
         if (appTitle == "Splitwise") "Manage $groupName" else "مدیریت $groupName"
 
+    fun payerRemainingHint(amount: String): String =
+        if (appTitle == "Splitwise") "$payerRemainingHintLabel: $amount" else "$payerRemainingHintLabel: $amount"
+
+    fun shareRemainingHint(amount: String): String =
+        if (appTitle == "Splitwise") "$shareRemainingHintLabel: $amount" else "$shareRemainingHintLabel: $amount"
+
+    fun applyRemainingPayer(amount: String): String =
+        if (appTitle == "Splitwise") "Fill remaining payer $amount" else "باقی‌مانده پرداخت $amount"
+
+    fun applyRemainingShare(amount: String): String =
+        if (appTitle == "Splitwise") "Fill remaining share $amount" else "باقی‌مانده سهم $amount"
+
+    fun applyEqualRemainingShare(amount: String): String =
+        if (appTitle == "Splitwise") "Split remaining equally $amount" else "تقسیم مساوی باقیمانده $amount"
+
+    fun payerOverflowMessage(amount: String): String =
+        if (appTitle == "Splitwise") "Payers exceed total by $amount." else "جمع پرداخت‌ها $amount از کل بیشتر شده است."
+
+    fun shareOverflowMessage(amount: String): String =
+        if (appTitle == "Splitwise") "Shares exceed target by $amount." else "جمع سهم‌ها $amount از مقدار هدف بیشتر شده است."
+
+    fun finalShareWithTax(amount: String): String =
+        if (appTitle == "Splitwise") "Final share with tax: $amount" else "سهم نهایی با مالیات: $amount"
+
+    fun serviceChargePreview(memberCount: Int, perMemberAmount: String): String =
+        if (appTitle == "Splitwise") "For $memberCount members, $perMemberAmount each." else "برای $memberCount نفر، سهم هر نفر $perMemberAmount است."
+
+    fun serviceChargeItemTitle(index: Int): String =
+        if (appTitle == "Splitwise") "Extra service $index" else "سرویس اضافه $index"
+
     fun expenseFormTitle(isEdit: Boolean): String = if (isEdit) editExpenseTitle else addExpenseTitle
     fun expenseFormAction(isEdit: Boolean): String = if (isEdit) saveExpenseChanges else saveExpense
     fun settlementFormTitle(isEdit: Boolean): String = if (isEdit) editSettlementTitle else addSettlementTitle
@@ -231,6 +289,8 @@ data class AppStrings(
         MessageKey.EXPENSE_SHARE_TOTAL_MISMATCH -> if (appTitle == "Splitwise") "Shares must match the full amount." else "جمع سهم‌ها باید با مبلغ کل برابر باشد."
         MessageKey.EXPENSE_TITLE_REQUIRED -> if (appTitle == "Splitwise") "Enter an expense title." else "عنوان خرج را وارد کنید."
         MessageKey.EXPENSE_AMOUNT_TOO_LARGE -> if (appTitle == "Splitwise") "Entered amount is too large." else "عدد واردشده بیش از حد بزرگ است."
+        MessageKey.EXPENSE_TAX_PERCENT_INVALID -> if (appTitle == "Splitwise") "Tax percent must be between 0 and 100." else "درصد مالیات باید بین صفر تا ۱۰۰ باشد."
+        MessageKey.EXPENSE_SERVICE_CHARGE_INVALID -> if (appTitle == "Splitwise") "Each extra service needs an amount and at least one member." else "هر سرویس اضافه باید مبلغ و حداقل یک عضو داشته باشد."
         MessageKey.EXPENSE_SAVED -> if (appTitle == "Splitwise") "Expense saved." else "خرج ذخیره شد."
         MessageKey.SETTLEMENT_SELECT_TWO_MEMBERS -> if (appTitle == "Splitwise") "Select two members." else "دو نفر را انتخاب کنید."
         MessageKey.SETTLEMENT_MEMBERS_MUST_DIFFER -> if (appTitle == "Splitwise") "Payer and receiver must be different." else "پرداخت‌کننده و دریافت‌کننده باید متفاوت باشند."
@@ -371,10 +431,38 @@ private val faStrings = AppStrings(
     payersTitle = "پرداخت‌کننده‌ها",
     sharesTitle = "سهم افراد",
     paidHowMuchLabel = "چقدر پرداخت کرده؟",
+    paidHowMuchHint = "این عضو از جیب خودش چقدر داده؟",
     payFullAmountLabel = "کل مبلغ با این نفر",
     clearAmountLabel = "پاک کردن مبلغ",
-    shareAmountLabel = "سهم این نفر",
-    equalShareLabel = "سهم مساوی",
+    baseShareLabel = "سهم پایه این نفر",
+    shareAmountHint = "از کل خرج، این نفر چقدر بدهکار است؟",
+    equalBaseShareLabel = "سهم پایه مساوی",
+    expenseSummaryTitle = "خلاصه زنده خرج",
+    enteredPayersTitle = "جمع پرداخت‌ها",
+    remainingPayersTitle = "باقی‌مانده پرداخت",
+    enteredSharesTitle = "جمع سهم‌ها",
+    remainingSharesTitle = "باقی‌مانده سهم",
+    finalSharesTitle = "جمع سهم نهایی",
+    payerRemainingHintLabel = "باقی‌مانده برای پرداخت",
+    shareRemainingHintLabel = "باقی‌مانده برای سهم",
+    taxToggleTitle = "مالیات یا سرویس اضافه دارد",
+    taxToggleSubtitle = "برای رستوران، سرویس، مالیات یا درصد اضافه.",
+    taxPercentLabel = "درصد مالیات",
+    taxAmountLabel = "مبلغ مالیات",
+    taxBreakdownTitle = "جزئیات مالیات",
+    baseAmountLabel = "مبلغ پایه",
+    taxShareLabel = "مالیات این نفر",
+    serviceChargeShareLabel = "سرویس اضافه این نفر",
+    finalShareLabel = "سهم نهایی",
+    serviceChargesTitle = "سرویس‌های اضافه",
+    serviceChargesSubtitle = "برای هزینه‌های ثابت مثل سرویس میز یا خدمات ویژه.",
+    addServiceChargeLabel = "افزودن سرویس",
+    serviceChargeNameLabel = "عنوان سرویس",
+    serviceChargeAmountLabel = "مبلغ سرویس",
+    serviceChargeMembersLabel = "برای چه افرادی؟",
+    serviceChargeHint = "برای این سرویس مبلغ و اعضای مرتبط را انتخاب کن.",
+    serviceChargesTotalLabel = "جمع سرویس‌های اضافه",
+    completeExpenseForm = "تکمیل فرم",
     calculatorTitle = "ماشین‌حساب",
     calculatorExpressionLabel = "عبارت",
     calculatorInvalidExpression = "عبارت معتبر نیست",
@@ -547,10 +635,38 @@ private val enStrings = AppStrings(
     payersTitle = "Payers",
     sharesTitle = "Shares",
     paidHowMuchLabel = "How much did they pay?",
+    paidHowMuchHint = "How much did this member pay out of pocket?",
     payFullAmountLabel = "Mark as full payer",
     clearAmountLabel = "Clear amount",
-    shareAmountLabel = "This member's share",
-    equalShareLabel = "Equal share",
+    baseShareLabel = "This member's base share",
+    shareAmountHint = "How much of the expense belongs to this member?",
+    equalBaseShareLabel = "Equal base share",
+    expenseSummaryTitle = "Live expense summary",
+    enteredPayersTitle = "Entered payers",
+    remainingPayersTitle = "Remaining payer amount",
+    enteredSharesTitle = "Entered shares",
+    remainingSharesTitle = "Remaining share amount",
+    finalSharesTitle = "Final share total",
+    payerRemainingHintLabel = "Remaining to pay",
+    shareRemainingHintLabel = "Remaining share",
+    taxToggleTitle = "This expense includes tax or service",
+    taxToggleSubtitle = "Useful for restaurant service, tax, or extra percentage fees.",
+    taxPercentLabel = "Tax percent",
+    taxAmountLabel = "Tax amount",
+    taxBreakdownTitle = "Tax breakdown",
+    baseAmountLabel = "Base amount",
+    taxShareLabel = "This member's tax",
+    serviceChargeShareLabel = "This member's extra service",
+    finalShareLabel = "Final share",
+    serviceChargesTitle = "Extra services",
+    serviceChargesSubtitle = "For fixed fees like table service or special service charges.",
+    addServiceChargeLabel = "Add service",
+    serviceChargeNameLabel = "Service name",
+    serviceChargeAmountLabel = "Service amount",
+    serviceChargeMembersLabel = "Who is this for?",
+    serviceChargeHint = "Choose an amount and the related members for this service.",
+    serviceChargesTotalLabel = "Extra services total",
+    completeExpenseForm = "Complete form",
     calculatorTitle = "Calculator",
     calculatorExpressionLabel = "Expression",
     calculatorInvalidExpression = "Expression is not valid",

@@ -11,16 +11,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Payments
+import androidx.compose.material.icons.rounded.Percent
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -159,6 +163,7 @@ fun ExpenseEditorScreen(
                             onValueChange = viewModel::updateTitle,
                             modifier = Modifier.fillMaxWidth(),
                             label = { Text(strings.expenseTitleLabel, style = MaterialTheme.typography.bodyMedium) },
+                            textStyle = MaterialTheme.typography.bodyLarge,
                             colors = appFieldColors(),
                             shape = RoundedCornerShape(20.dp)
                         )
@@ -167,6 +172,7 @@ fun ExpenseEditorScreen(
                             onValueChange = viewModel::updateNote,
                             modifier = Modifier.fillMaxWidth(),
                             label = { Text(strings.expenseNoteLabel, style = MaterialTheme.typography.bodyMedium) },
+                            textStyle = MaterialTheme.typography.bodyLarge,
                             colors = appFieldColors(),
                             shape = RoundedCornerShape(20.dp)
                         )
@@ -178,7 +184,24 @@ fun ExpenseEditorScreen(
                             shape = RoundedCornerShape(20.dp),
                             label = strings.totalAmountLabel,
                         )
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        TaxConfigurationSection(
+                            taxEnabled = uiState.taxEnabled,
+                            taxPercentInput = uiState.taxPercentInput,
+                            baseAmountPreview = uiState.baseAmountPreview,
+                            taxAmountPreview = uiState.taxAmountPreview,
+                            onTaxEnabledChange = viewModel::updateTaxEnabled,
+                            onTaxPercentChange = viewModel::updateTaxPercent,
+                        )
+                        ServiceChargesSection(
+                            serviceCharges = uiState.serviceCharges,
+                            members = uiState.members,
+                            onAdd = viewModel::addServiceCharge,
+                            onRemove = viewModel::removeServiceCharge,
+                            onTitleChange = viewModel::updateServiceChargeTitle,
+                            onAmountChange = viewModel::updateServiceChargeAmount,
+                            onToggleMember = viewModel::toggleServiceChargeMember,
+                        )
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             FilterChip(
                                 selected = uiState.splitType == SplitType.EQUAL,
                                 onClick = { viewModel.updateSplitType(SplitType.EQUAL) },
@@ -210,30 +233,43 @@ fun ExpenseEditorScreen(
             AppAnimatedSection(visible = contentVisible, enter = appSectionEnter(delayMillis = 100)) {
                 SectionHeader(strings.membersAndPayersTitle)
             }
+            AppAnimatedSection(visible = contentVisible, enter = appSectionEnter(delayMillis = 115)) {
+                ExpenseLiveSummaryCard(uiState = uiState)
+            }
             uiState.members.forEach { member ->
                 AppAnimatedSection(visible = contentVisible, enter = appSectionEnter(delayMillis = 130)) {
                     MemberEditorCard(
                         member = member,
-                        splitType = uiState.splitType,
-                        equalSharePreview = buildEqualPreview(uiState, member.memberId),
-                        totalAmountInput = uiState.totalAmountInput,
+                        uiState = uiState,
                         onToggleIncluded = { included -> viewModel.toggleIncluded(member.memberId, included) },
                         onPayerChange = { value -> viewModel.updatePayer(member.memberId, value) },
                         onExactShareChange = { value -> viewModel.updateExactShare(member.memberId, value) },
                         onAssignFullAmount = { viewModel.assignFullAmountToPayer(member.memberId) },
-                        onClearPayerAmount = { viewModel.clearPayerAmount(member.memberId) }
+                        onClearPayerAmount = { viewModel.clearPayerAmount(member.memberId) },
+                        onApplySuggestedPayer = { viewModel.applySuggestedPayer(member.memberId) },
+                        onApplySuggestedShare = { viewModel.applySuggestedShare(member.memberId) },
+                        onApplyEqualRemainingShare = { viewModel.applyEqualRemainingShare(member.memberId) }
                     )
                 }
             }
             AppAnimatedSection(visible = contentVisible, enter = appHeroSectionEnter(delayMillis = 170)) {
                 Button(
                     onClick = { viewModel.save() },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
                     shape = RoundedCornerShape(22.dp),
                     colors = appPrimaryButtonColors(),
                     enabled = uiState.canCreateTransaction
                 ) {
-                    Text(strings.expenseFormAction(expenseId != null), style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        if (uiState.isAmountsReady && uiState.title.isNotBlank()) {
+                            strings.expenseFormAction(expenseId != null)
+                        } else {
+                            strings.completeExpenseForm
+                        },
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
         }
@@ -244,20 +280,26 @@ fun ExpenseEditorScreen(
 @Composable
 private fun MemberEditorCard(
     member: MemberDraftUi,
-    splitType: SplitType,
-    equalSharePreview: String,
-    totalAmountInput: String,
+    uiState: ExpenseEditorUiState,
     onToggleIncluded: (Boolean) -> Unit,
     onPayerChange: (String) -> Unit,
     onExactShareChange: (String) -> Unit,
     onAssignFullAmount: () -> Unit,
     onClearPayerAmount: () -> Unit,
+    onApplySuggestedPayer: () -> Unit,
+    onApplySuggestedShare: () -> Unit,
+    onApplyEqualRemainingShare: () -> Unit,
 ) {
     val strings = appStrings()
-    val hasPositiveTotal = (parseAmountInputOrNull(totalAmountInput) ?: 0) > 0
+    val hasPositiveTotal = (parseAmountInputOrNull(uiState.totalAmountInput) ?: 0) > 0
     val hasPayerAmount = member.payerAmountInput.isNotBlank()
     ElevatedCard(shape = RoundedCornerShape(24.dp), colors = appCardColors()) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("@${member.username}", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Switch(
@@ -266,10 +308,7 @@ private fun MemberEditorCard(
                     colors = appSwitchColors()
                 )
             }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 AssistChip(
                     onClick = onAssignFullAmount,
                     enabled = hasPositiveTotal,
@@ -277,6 +316,18 @@ private fun MemberEditorCard(
                     label = { Text(strings.payFullAmountLabel, style = MaterialTheme.typography.labelLarge) },
                     leadingIcon = { Icon(Icons.Rounded.Payments, contentDescription = null) }
                 )
+                AppAnimatedVisibility(visible = member.suggestedRemainingPayer != null) {
+                    AssistChip(
+                        onClick = onApplySuggestedPayer,
+                        colors = appAssistChipColors(),
+                        label = {
+                            Text(
+                                strings.applyRemainingPayer(formatAmount(member.suggestedRemainingPayer ?: 0)),
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    )
+                }
                 AppAnimatedVisibility(visible = hasPayerAmount) {
                     OutlinedButton(onClick = onClearPayerAmount, colors = appOutlinedButtonColors()) {
                         Text(strings.clearAmountLabel, style = MaterialTheme.typography.labelLarge)
@@ -291,37 +342,305 @@ private fun MemberEditorCard(
                 shape = RoundedCornerShape(18.dp),
                 label = strings.paidHowMuchLabel,
             )
-            AppAnimatedVisibility(visible = member.includedInSplit) {
-                if (splitType == SplitType.EXACT) {
+            FieldHelperText(
+                text = when {
+                    uiState.isPayerOverflow -> strings.payerOverflowMessage(formatAmount(-uiState.remainingPayerAmount))
+                    member.suggestedRemainingPayer != null -> strings.payerRemainingHint(formatAmount(member.suggestedRemainingPayer ?: 0))
+                    else -> strings.paidHowMuchHint
+                },
+                isError = uiState.isPayerOverflow
+            )
+            if (member.includedInSplit) {
+                if (uiState.splitType == SplitType.EXACT) {
                     CalculatorAmountField(
                         value = member.exactShareInput,
                         onValueChange = onExactShareChange,
                         modifier = Modifier.fillMaxWidth(),
                         colors = appFieldColors(),
                         shape = RoundedCornerShape(18.dp),
-                        label = strings.shareAmountLabel,
+                        label = strings.baseShareLabel,
                     )
+                    FieldHelperText(
+                        text = when {
+                            uiState.isShareOverflow -> strings.shareOverflowMessage(formatAmount(-uiState.remainingShareAmount))
+                            member.suggestedRemainingShare != null -> strings.shareRemainingHint(formatAmount(member.suggestedRemainingShare ?: 0))
+                            else -> strings.shareAmountHint
+                        },
+                        isError = uiState.isShareOverflow
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        AppAnimatedVisibility(visible = member.suggestedRemainingShare != null) {
+                            AssistChip(
+                                onClick = onApplySuggestedShare,
+                                colors = appAssistChipColors(),
+                                label = {
+                                    Text(
+                                        strings.applyRemainingShare(formatAmount(member.suggestedRemainingShare ?: 0)),
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                }
+                            )
+                        }
+                        AppAnimatedVisibility(visible = member.equalRemainingShare != null) {
+                            AssistChip(
+                                onClick = onApplyEqualRemainingShare,
+                                colors = appAssistChipColors(),
+                                label = {
+                                    Text(
+                                        strings.applyEqualRemainingShare(formatAmount(member.equalRemainingShare ?: 0)),
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                }
+                            )
+                        }
+                    }
                 } else {
-                    DetailLine(label = strings.equalShareLabel, value = equalSharePreview)
+                    DetailLine(label = strings.baseShareLabel, value = formatAmount(member.baseSharePreview))
+                }
+                DetailLine(label = strings.taxShareLabel, value = formatAmount(member.taxSharePreview))
+                DetailLine(label = strings.serviceChargeShareLabel, value = formatAmount(member.serviceChargeSharePreview))
+                DetailLine(label = strings.finalShareLabel, value = formatAmount(member.finalSharePreview))
+            }
+        }
+    }
+}
+
+@Composable
+private fun TaxConfigurationSection(
+    taxEnabled: Boolean,
+    taxPercentInput: String,
+    baseAmountPreview: Int,
+    taxAmountPreview: Int,
+    onTaxEnabledChange: (Boolean) -> Unit,
+    onTaxPercentChange: (String) -> Unit,
+) {
+    val strings = appStrings()
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(strings.taxToggleTitle, style = MaterialTheme.typography.titleMedium)
+                Text(strings.taxToggleSubtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(
+                checked = taxEnabled,
+                onCheckedChange = onTaxEnabledChange,
+                colors = appSwitchColors()
+            )
+        }
+        AppAnimatedVisibility(visible = taxEnabled) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                CalculatorAmountField(
+                    value = taxPercentInput,
+                    onValueChange = onTaxPercentChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = appFieldColors(),
+                    shape = RoundedCornerShape(18.dp),
+                    label = strings.taxPercentLabel,
+                )
+                Card(
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Rounded.Percent, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Text(strings.taxBreakdownTitle, style = MaterialTheme.typography.titleMedium)
+                        }
+                        DetailLine(strings.baseAmountLabel, formatAmount(baseAmountPreview))
+                        DetailLine(strings.taxAmountLabel, formatAmount(taxAmountPreview))
+                        DetailLine(strings.totalAmountStat, formatAmount(baseAmountPreview + taxAmountPreview))
+                    }
                 }
             }
         }
     }
 }
 
-private fun buildEqualPreview(uiState: ExpenseEditorUiState, memberId: String): String {
-    if (uiState.splitType != SplitType.EQUAL) return ""
-    val totalAmount = parseAmountInput(uiState.totalAmountInput)
-    val selectedIds = uiState.members.filter { it.includedInSplit }.map { it.memberId }
-    val shares: List<ExpenseShare> = if (selectedIds.isEmpty()) {
-        emptyList()
-    } else {
-        selectedIds.sorted().mapIndexed { index, id ->
-            val base = totalAmount / selectedIds.size
-            val extra = if (index < totalAmount % selectedIds.size) 1 else 0
-            ExpenseShare(id, base + extra)
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ServiceChargesSection(
+    serviceCharges: List<ServiceChargeDraftUi>,
+    members: List<MemberDraftUi>,
+    onAdd: () -> Unit,
+    onRemove: (String) -> Unit,
+    onTitleChange: (String, String) -> Unit,
+    onAmountChange: (String, String) -> Unit,
+    onToggleMember: (String, String) -> Unit,
+) {
+    val strings = appStrings()
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(strings.serviceChargesTitle, style = MaterialTheme.typography.titleMedium)
+                Text(strings.serviceChargesSubtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            OutlinedButton(onClick = onAdd, colors = appOutlinedButtonColors()) {
+                Icon(Icons.Rounded.Add, contentDescription = null)
+                Text(strings.addServiceChargeLabel, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+        serviceCharges.forEachIndexed { index, charge ->
+            ServiceChargeEditorCard(
+                title = charge.title,
+                amountInput = charge.amountInput,
+                members = members,
+                selectedMemberIds = charge.selectedMemberIds,
+                serviceIndex = index + 1,
+                onRemove = { onRemove(charge.id) },
+                onTitleChange = { onTitleChange(charge.id, it) },
+                onAmountChange = { onAmountChange(charge.id, it) },
+                onToggleMember = { memberId -> onToggleMember(charge.id, memberId) },
+            )
         }
     }
-    val amount = shares.firstOrNull { it.memberId == memberId }?.amount ?: 0
-    return if (amount > 0) formatAmount(amount) else "-"
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ServiceChargeEditorCard(
+    title: String,
+    amountInput: String,
+    members: List<MemberDraftUi>,
+    selectedMemberIds: Set<String>,
+    serviceIndex: Int,
+    onRemove: () -> Unit,
+    onTitleChange: (String) -> Unit,
+    onAmountChange: (String) -> Unit,
+    onToggleMember: (String) -> Unit,
+) {
+    val strings = appStrings()
+    val amount = parseAmountInput(amountInput)
+    val selectedIds = members.map { it.memberId }.filter { it in selectedMemberIds }
+    val perMember = if (amount > 0 && selectedIds.isNotEmpty()) splitAmountDeterministically(amount, selectedIds).values.firstOrNull() ?: 0 else 0
+    Card(
+        shape = RoundedCornerShape(22.dp),
+        colors = appPlainCardColors(),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(strings.serviceChargeItemTitle(serviceIndex), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                IconButton(onClick = onRemove) {
+                    Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
+                }
+            }
+            OutlinedTextField(
+                value = title,
+                onValueChange = onTitleChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(strings.serviceChargeNameLabel, style = MaterialTheme.typography.bodyMedium) },
+                textStyle = MaterialTheme.typography.bodyLarge,
+                colors = appFieldColors(),
+                shape = RoundedCornerShape(18.dp)
+            )
+            CalculatorAmountField(
+                value = amountInput,
+                onValueChange = onAmountChange,
+                modifier = Modifier.fillMaxWidth(),
+                colors = appFieldColors(),
+                shape = RoundedCornerShape(18.dp),
+                label = strings.serviceChargeAmountLabel,
+            )
+            Text(strings.serviceChargeMembersLabel, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                members.filter { it.includedInSplit }.forEach { member ->
+                    FilterChip(
+                        selected = member.memberId in selectedMemberIds,
+                        onClick = { onToggleMember(member.memberId) },
+                        label = { Text("@${member.username}", style = MaterialTheme.typography.labelLarge) },
+                        colors = appFilterChipColors()
+                    )
+                }
+            }
+            FieldHelperText(
+                text = if (selectedIds.isNotEmpty() && amount > 0) {
+                    strings.serviceChargePreview(selectedIds.size, formatAmount(perMember))
+                } else {
+                    strings.serviceChargeHint
+                },
+                isError = amountInput.isNotBlank() && selectedIds.isEmpty()
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExpenseLiveSummaryCard(uiState: ExpenseEditorUiState) {
+    val strings = appStrings()
+    val tone = when {
+        uiState.isPayerOverflow || uiState.isShareOverflow || uiState.hasInvalidServiceCharges || uiState.hasInvalidTaxPercent -> MaterialTheme.colorScheme.error
+        uiState.isAmountsReady -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.secondary
+    }
+    Card(
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = tone.copy(alpha = 0.08f),
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        border = BorderStroke(1.dp, tone.copy(alpha = 0.16f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(strings.expenseSummaryTitle, style = MaterialTheme.typography.titleMedium, color = tone)
+            DetailLine(strings.totalAmountStat, formatAmount(parseAmountInput(uiState.totalAmountInput)))
+            DetailLine(strings.enteredPayersTitle, formatAmount(uiState.payerTotal))
+            DetailLine(strings.remainingPayersTitle, formatAmount(uiState.remainingPayerAmount.coerceAtLeast(0)))
+            DetailLine(strings.enteredSharesTitle, formatAmount(uiState.shareTotal))
+            DetailLine(strings.remainingSharesTitle, formatAmount(uiState.remainingShareAmount.coerceAtLeast(0)))
+            DetailLine(strings.taxAmountLabel, formatAmount(uiState.taxAmountPreview))
+            DetailLine(strings.serviceChargesTotalLabel, formatAmount(uiState.serviceChargeTotalPreview))
+            DetailLine(strings.finalSharesTitle, formatAmount(uiState.finalShareTotal))
+            AppAnimatedVisibility(
+                visible = uiState.isPayerOverflow || uiState.isShareOverflow || uiState.hasInvalidServiceCharges || uiState.hasInvalidTaxPercent
+            ) {
+                Text(
+                    text = when {
+                        uiState.hasInvalidTaxPercent -> strings.message(MessageKey.EXPENSE_TAX_PERCENT_INVALID).orEmpty()
+                        uiState.hasInvalidServiceCharges -> strings.message(MessageKey.EXPENSE_SERVICE_CHARGE_INVALID).orEmpty()
+                        uiState.isPayerOverflow -> strings.payerOverflowMessage(formatAmount(-uiState.remainingPayerAmount))
+                        else -> strings.shareOverflowMessage(formatAmount(-uiState.remainingShareAmount))
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FieldHelperText(text: String, isError: Boolean) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+private fun buildEqualPreview(uiState: ExpenseEditorUiState, memberId: String): String {
+    if (uiState.splitType != SplitType.EQUAL) return "-"
+    val member = uiState.members.firstOrNull { it.memberId == memberId } ?: return "-"
+    return formatAmount(member.baseSharePreview)
 }
