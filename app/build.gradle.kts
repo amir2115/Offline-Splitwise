@@ -30,7 +30,7 @@ val myketStoreUrl = propertyOrEnv(
 )
 val organicStoreUrl = propertyOrEnv(
     "SPLITWISE_ORGANIC_STORE_URL",
-    "https://splitwise.ir/downloads/splitwise"
+    "http://splitwise.ir/download-app"
 )
 
 val releaseStoreFile = propertyOrEnv("SPLITWISE_RELEASE_STORE_FILE")
