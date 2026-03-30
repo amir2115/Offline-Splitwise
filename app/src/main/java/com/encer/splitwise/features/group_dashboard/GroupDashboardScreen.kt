@@ -29,6 +29,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +63,7 @@ import com.encer.splitwise.ui.components.AppAnimatedSection
 import com.encer.splitwise.ui.components.AppAnimatedVisibility
 import com.encer.splitwise.ui.components.AppInlineMessageCard
 import com.encer.splitwise.ui.components.DashboardHeroCard
+import com.encer.splitwise.ui.components.DetailLine
 import com.encer.splitwise.ui.components.EmptyStateCard
 import com.encer.splitwise.ui.components.SectionHeader
 import com.encer.splitwise.ui.components.appBackgroundBrush
@@ -75,6 +77,7 @@ import com.encer.splitwise.ui.components.appSectionEnter
 import com.encer.splitwise.ui.components.appTopBarColors
 import com.encer.splitwise.ui.formatting.formatAmount
 import com.encer.splitwise.ui.formatting.formatAmountCompact
+import com.encer.splitwise.ui.formatting.formatDate
 import com.encer.splitwise.ui.localization.LocalAppLanguage
 import com.encer.splitwise.ui.localization.appStrings
 import kotlinx.coroutines.launch
@@ -290,6 +293,63 @@ private fun ExpenseCard(expense: Expense, members: List<Member>, onClick: () -> 
                 )
             }
             Text(expense.note?.ifBlank { strings.noDescription } ?: strings.noDescription, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = appBlendOverBackground(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            alpha = if (MaterialTheme.colorScheme.background.luminance() > 0.5f) 0.78f else 0.88f
+                        ),
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.10f))
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(strings.dateStat, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(formatDate(expense.createdAt), style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = appBlendOverBackground(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            alpha = if (MaterialTheme.colorScheme.background.luminance() > 0.5f) 0.78f else 0.88f
+                        ),
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.10f))
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(strings.splitMethodStat, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(strings.splitTypeLabel(expense.splitType == com.encer.splitwise.domain.model.SplitType.EQUAL), style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
+            DetailLine(strings.peopleCountStat, formatAmountCompact(expense.shares.size))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+            Text(strings.payersTitle, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            expense.payers.forEach { payer ->
+                DetailLine(memberName(members, payer.memberId), formatAmount(payer.amount))
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+            Text(strings.sharesTitle, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            expense.shares.forEach { share ->
+                DetailLine(memberName(members, share.memberId), formatAmount(share.amount))
+            }
             AssistChip(
                 onClick = {},
                 colors = appAssistChipColors(),
