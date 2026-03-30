@@ -11,6 +11,7 @@ import com.encer.splitwise.data.update.AppUpdateChecker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -23,16 +24,25 @@ class AppShellViewModel @Inject constructor(
     val appUpdateChecker: AppUpdateChecker,
     private val postAuthBootstrapper: PostAuthBootstrapper,
 ) : ViewModel() {
+    private var postAuthBootstrapJob: Job? = null
+
     fun refreshConnectionStatus() {
         viewModelScope.launch {
             networkMonitor.refreshApiReachability()
         }
     }
 
+    private fun launchPostAuthBootstrap() {
+        if (postAuthBootstrapJob?.isActive == true) return
+        postAuthBootstrapJob = viewModelScope.launch {
+            postAuthBootstrapper.run()
+        }
+    }
+
     suspend fun login(username: String, password: String): Result<*> {
         val result = syncCoordinator.login(username, password)
         if (result.isSuccess) {
-            postAuthBootstrapper.run()
+            launchPostAuthBootstrap()
         }
         return result
     }
@@ -40,7 +50,7 @@ class AppShellViewModel @Inject constructor(
     suspend fun register(name: String, username: String, password: String): Result<*> {
         val result = syncCoordinator.register(name, username, password)
         if (result.isSuccess) {
-            postAuthBootstrapper.run()
+            launchPostAuthBootstrap()
         }
         return result
     }
@@ -48,7 +58,7 @@ class AppShellViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             if (sessionRepository.currentSession() != null) {
-                postAuthBootstrapper.run()
+                launchPostAuthBootstrap()
             }
             networkMonitor.observeStatus().collect { status ->
                 if (status.hasInternet && status.isApiReachable) {
