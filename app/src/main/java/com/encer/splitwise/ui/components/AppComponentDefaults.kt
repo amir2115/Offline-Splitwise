@@ -18,6 +18,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import com.encer.splitwise.ui.formatting.GroupedNumberVisualTransformation
+import com.encer.splitwise.ui.theme.DarkBackgroundGradientBottom
+import com.encer.splitwise.ui.theme.DarkBackgroundGradientMiddle
+import com.encer.splitwise.ui.theme.DarkBackgroundGradientTop
+import com.encer.splitwise.ui.theme.LightBackgroundGradientBottom
+import com.encer.splitwise.ui.theme.LightBackgroundGradientTop
 
 val amountVisualTransformation = GroupedNumberVisualTransformation()
 
@@ -125,8 +130,8 @@ fun appHeroIconContainerColor(): Color {
 fun appBackgroundBrush(isDark: Boolean): Brush =
     Brush.verticalGradient(
         colors = if (isDark) {
-            listOf(Color(0xFF0D1719), Color(0xFF112226), Color(0xFF142A2F))
+            listOf(DarkBackgroundGradientTop, DarkBackgroundGradientMiddle, DarkBackgroundGradientBottom)
         } else {
-            listOf(Color(0xFFF9FBF2), Color(0xFFF0F6F6), Color(0xFFFFF8EF))
+            listOf(LightBackgroundGradientTop, LightBackgroundGradientBottom)
         }
     )

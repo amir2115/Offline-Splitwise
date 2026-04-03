@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +22,6 @@ import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -54,7 +52,6 @@ import com.encer.splitwise.ui.components.appCardColors
 import com.encer.splitwise.ui.components.appPlainCardColors
 import com.encer.splitwise.ui.components.appTopBarColors
 import com.encer.splitwise.ui.formatting.formatAmount
-import com.encer.splitwise.ui.formatting.formatAmountCompact
 import com.encer.splitwise.ui.formatting.formatDate
 import com.encer.splitwise.ui.localization.appStrings
 
@@ -184,10 +181,8 @@ private fun ExpenseOverviewCard(expense: Expense) {
             )
             SummaryGrid(
                 items = listOf(
-                    strings.totalAmountStat to formatAmount(expense.totalAmount),
                     strings.splitMethodStat to strings.splitTypeLabel(expense.splitType == SplitType.EQUAL),
                     strings.dateStat to formatDate(expense.createdAt),
-                    strings.peopleCountStat to formatAmountCompact(expense.shares.size)
                 )
             )
         }
@@ -285,12 +280,6 @@ private fun ParticipantRowCard(row: ParticipantRow) {
                 value = formatAmount(row.owed),
                 modifier = Modifier.weight(1f)
             )
-            ParticipantStatCard(
-                label = strings.netStat,
-                value = formatAmount(row.netAbsolute),
-                valueColor = netTone(row.net),
-                modifier = Modifier.weight(1f)
-            )
         }
     }
 }
@@ -310,7 +299,8 @@ private fun ParticipantStatCard(
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = label,
@@ -413,7 +403,8 @@ private fun SummaryGrid(items: List<Pair<String, String>>) {
                     ) {
                         Column(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 15.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
                                 text = label,
