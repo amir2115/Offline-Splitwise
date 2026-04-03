@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -40,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.encer.splitwise.domain.model.MemberBalance
@@ -165,6 +169,7 @@ fun BalancesScreen(
                     }
                 }
             }
+            item { Spacer(Modifier.height(24.dp)) }
         }
     }
 }
@@ -182,30 +187,36 @@ private fun BalanceCard(balance: MemberBalance) {
         colors = appPlainCardColors(),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(balance.memberName, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-                Text(
-                    text = strings.balanceState(balance.netBalance),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = tone,
-                    fontWeight = FontWeight.Bold
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(balance.memberName, style = MaterialTheme.typography.headlineSmall)
+                BalanceStatusChip(
+                    label = strings.balanceState(balance.netBalance),
+                    tone = tone
                 )
             }
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     BalanceStatCard(
                         modifier = Modifier.weight(1f),
-                        label = strings.paidStat,
-                        amount = balance.paidTotal
+                        label = strings.owedStat,
+                        amount = balance.owedTotal
                     )
                     BalanceStatCard(
                         modifier = Modifier.weight(1f),
-                        label = strings.owedStat,
-                        amount = balance.owedTotal
+                        label = strings.paidStat,
+                        amount = balance.paidTotal
                     )
                 }
                 BalanceStatCard(
@@ -216,6 +227,26 @@ private fun BalanceCard(balance: MemberBalance) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun BalanceStatusChip(
+    label: String,
+    tone: Color,
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = tone.copy(alpha = 0.12f),
+        contentColor = tone,
+        border = BorderStroke(1.dp, tone.copy(alpha = 0.16f))
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -275,10 +306,10 @@ private fun BalanceStatCard(
     accent: Color = MaterialTheme.colorScheme.primary,
 ) {
     Card(
-        modifier = modifier.heightIn(min = 86.dp),
+        modifier = modifier.heightIn(min = 80.dp),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
@@ -286,10 +317,17 @@ private fun BalanceStatCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.End
         ) {
-            Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                label,
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Start
+            )
             AmountText(
                 amount = amount,
                 style = MaterialTheme.typography.titleMedium,
