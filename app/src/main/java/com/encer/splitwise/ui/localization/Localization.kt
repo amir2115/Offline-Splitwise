@@ -88,6 +88,8 @@ data class AppStrings(
     val editMember: String,
     val memberPlaceholder: String,
     val saveMember: String,
+    val deleteMemberTitle: String,
+    val deleteMemberSubtitle: String,
     val noMembersTitle: String,
     val noMembersSubtitle: String,
     val invalidUsernameSyncTitle: String,
@@ -123,6 +125,7 @@ data class AppStrings(
     val optimizePaymentsTitle: String,
     val optimizePaymentsSubtitle: String,
     val memberBalanceTitle: String,
+    val memberBalanceSubtitle: String,
     val suggestedPaymentsTitle: String,
     val allSettledTitle: String,
     val allSettledSubtitle: String,
@@ -159,6 +162,8 @@ data class AppStrings(
     val taxShareLabel: String,
     val serviceChargeShareLabel: String,
     val finalShareLabel: String,
+    val showDetailsLabel: String,
+    val hideDetailsLabel: String,
     val serviceChargesTitle: String,
     val serviceChargesSubtitle: String,
     val addServiceChargeLabel: String,
@@ -210,6 +215,9 @@ data class AppStrings(
 ) {
     fun memberSince(date: String): String =
         if (appTitle == "Splitwise") "Member since $date" else "عضو از $date"
+
+    fun deleteMemberDialogTitle(username: String): String =
+        if (appTitle == "Splitwise") "$deleteMemberTitle @$username?" else "$deleteMemberTitle @$username؟"
 
     fun paymentSuggestion(from: String, to: String): String =
         if (appTitle == "Splitwise") "$from should pay $to" else "$from باید به $to پرداخت کند"
@@ -383,6 +391,8 @@ private val faStrings = AppStrings(
     editMember = "ویرایش عضو",
     memberPlaceholder = "نام کاربری عضو",
     saveMember = "ثبت عضو",
+    deleteMemberTitle = "حذف عضو",
+    deleteMemberSubtitle = "این عضو از گروه حذف می‌شود. اگر خرج یا تسویه‌ای به او وصل باشد، قبل از حذف بررسی‌اش کن.",
     noMembersTitle = "هیچ عضوی ثبت نشده",
     noMembersSubtitle = "برای ثبت خرج حداقل یک عضو نیاز داری.",
     invalidUsernameSyncTitle = "همگام‌سازی به خاطر نام کاربری نامعتبر متوقف شد",
@@ -418,6 +428,7 @@ private val faStrings = AppStrings(
     optimizePaymentsTitle = "حالت پرداخت بهینه",
     optimizePaymentsSubtitle = "کمترین تعداد پرداخت پیشنهادی را نشان می‌دهد.",
     memberBalanceTitle = "مانده هر نفر",
+    memberBalanceSubtitle = "وضعیت این عضو در گروه",
     suggestedPaymentsTitle = "پرداخت‌های پیشنهادی",
     allSettledTitle = "همه‌چیز تسویه است",
     allSettledSubtitle = "در این گروه پرداخت باز باقی نمانده.",
@@ -454,6 +465,8 @@ private val faStrings = AppStrings(
     taxShareLabel = "مالیات این نفر",
     serviceChargeShareLabel = "سرویس اضافه این نفر",
     finalShareLabel = "سهم نهایی",
+    showDetailsLabel = "جزئیات",
+    hideDetailsLabel = "بستن جزئیات",
     serviceChargesTitle = "سرویس‌های اضافه",
     serviceChargesSubtitle = "برای هزینه‌های ثابت مثل سرویس میز یا خدمات ویژه.",
     addServiceChargeLabel = "افزودن سرویس",
@@ -587,6 +600,8 @@ private val enStrings = AppStrings(
     editMember = "Edit member",
     memberPlaceholder = "Member username",
     saveMember = "Save member",
+    deleteMemberTitle = "Delete member",
+    deleteMemberSubtitle = "This member will be removed from the group. Review any linked expenses or settlements before confirming.",
     noMembersTitle = "No members yet",
     noMembersSubtitle = "You need at least one member before adding expenses.",
     invalidUsernameSyncTitle = "Sync blocked by invalid usernames",
@@ -622,6 +637,7 @@ private val enStrings = AppStrings(
     optimizePaymentsTitle = "Simplified payments",
     optimizePaymentsSubtitle = "Shows the minimum suggested number of payments.",
     memberBalanceTitle = "Each member balance",
+    memberBalanceSubtitle = "This member status in group",
     suggestedPaymentsTitle = "Suggested payments",
     allSettledTitle = "Everything is settled",
     allSettledSubtitle = "There are no outstanding payments in this group.",
@@ -658,6 +674,8 @@ private val enStrings = AppStrings(
     taxShareLabel = "This member's tax",
     serviceChargeShareLabel = "This member's extra service",
     finalShareLabel = "Final share",
+    showDetailsLabel = "Details",
+    hideDetailsLabel = "Hide details",
     serviceChargesTitle = "Extra services",
     serviceChargesSubtitle = "For fixed fees like table service or special service charges.",
     addServiceChargeLabel = "Add service",
@@ -715,3 +733,27 @@ fun stringsFor(language: AppLanguage): AppStrings = if (language == AppLanguage.
 
 @Composable
 fun appStrings(): AppStrings = LocalAppStrings.current
+
+fun resolveUserFacingSyncError(
+    rawMessage: String?,
+    strings: AppStrings,
+): String? {
+    if (rawMessage.isNullOrBlank()) return null
+    val message = rawMessage.lowercase()
+    return when {
+        "401" in message ||
+            "unauthorized" in message ||
+            "invalid token" in message ||
+            "refresh token" in message -> strings.syncLoginRequired
+        "unable to resolve host" in message ||
+            "failed to connect" in message ||
+            "timeout" in message ||
+            "timed out" in message ||
+            "no address associated with hostname" in message ||
+            "network" in message ||
+            "socket" in message ||
+            "connection reset" in message ||
+            "unreachable" in message -> strings.syncConnectionIssue
+        else -> strings.syncServerIssue
+    }
+}

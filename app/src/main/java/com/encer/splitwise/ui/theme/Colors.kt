@@ -1,0 +1,42 @@
+package com.encer.splitwise.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+val LightPrimary = Color(0xFF177C70)
+val LightOnPrimary = Color(0xFFFFFFFF)
+val LightSecondary = Color(0xFF2B8C7F)
+val LightOnSecondary = Color(0xFFFFFFFF)
+val LightTertiary = Color(0xFF9D7657)
+val LightOnTertiary = Color(0xFFFFFFFF)
+val LightBackground = Color(0xFFF2EFE6)
+val LightOnBackground = Color(0xFF183133)
+val LightSurface = Color(0xFFF8F4EC)
+val LightOnSurface = Color(0xFF183133)
+val LightSurfaceVariant = Color(0xFFD7E3DD)
+val LightOnSurfaceVariant = Color(0xFF526968)
+val LightOutline = Color(0xFF8EA29F)
+val LightError = Color(0xFFB91C1C)
+val LightOnError = Color(0xFFFFFFFF)
+
+val DarkPrimary = Color(0xFF67D7C2)
+val DarkOnPrimary = Color(0xFF092D2B)
+val DarkSecondary = Color(0xFF82D3C2)
+val DarkOnSecondary = Color(0xFF0B2D2A)
+val DarkTertiary = Color(0xFFC59B7A)
+val DarkOnTertiary = Color(0xFF3B2A1F)
+val DarkBackground = Color(0xFF0B1516)
+val DarkOnBackground = Color(0xFFEDF6F2)
+val DarkSurface = Color(0xFF122022)
+val DarkOnSurface = Color(0xFFF2F8F4)
+val DarkSurfaceVariant = Color(0xFF284140)
+val DarkOnSurfaceVariant = Color(0xFFB2C2BE)
+val DarkOutline = Color(0xFF718885)
+val DarkError = Color(0xFFFF8A80)
+val DarkOnError = Color(0xFF5C1410)
+
+val LightBackgroundGradientTop = Color(0xFFF7F4EC)
+val LightBackgroundGradientBottom = Color(0xFFEEF4EF)
+
+val DarkBackgroundGradientTop = Color(0xFF0B1516)
+val DarkBackgroundGradientMiddle = Color(0xFF0F1F21)
+val DarkBackgroundGradientBottom = Color(0xFF133033)
