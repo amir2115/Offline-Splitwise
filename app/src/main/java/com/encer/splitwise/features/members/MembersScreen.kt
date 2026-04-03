@@ -21,12 +21,14 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.PersonAddAlt
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,6 +55,7 @@ fun MembersScreen(groupId: String, onBack: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var editingMemberId by rememberSaveable { mutableStateOf<String?>(null) }
+    var deletingMemberId by rememberSaveable { mutableStateOf<String?>(null) }
 
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -125,7 +128,7 @@ fun MembersScreen(groupId: String, onBack: () -> Unit) {
                         IconButton(onClick = { editingMemberId = member.id }) {
                             Icon(Icons.Rounded.Edit, contentDescription = strings.edit)
                         }
-                        IconButton(onClick = { viewModel.deleteMember(member.id) }) {
+                        IconButton(onClick = { deletingMemberId = member.id }) {
                             Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
                         }
                     }
@@ -162,6 +165,46 @@ fun MembersScreen(groupId: String, onBack: () -> Unit) {
                 onConfirm = { name ->
                     viewModel.updateMember(member.copy(username = name))
                     editingMemberId = null
+                }
+            )
+        }
+    }
+
+    deletingMemberId?.let { memberId ->
+        uiState.members.firstOrNull { it.id == memberId }?.let { member ->
+            AlertDialog(
+                onDismissRequest = { deletingMemberId = null },
+                title = {
+                    Text(
+                        strings.deleteMemberDialogTitle(member.username),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
+                text = {
+                    Text(
+                        strings.deleteMemberSubtitle,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.deleteMember(member.id)
+                            deletingMemberId = null
+                        }
+                    ) {
+                        Text(
+                            strings.delete,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deletingMemberId = null }) {
+                        Text(strings.cancel, style = MaterialTheme.typography.labelLarge)
+                    }
                 }
             )
         }
