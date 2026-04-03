@@ -1,4 +1,4 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.material.ExperimentalMaterialApi::class)
 
 package com.encer.splitwise.features.groups
 
@@ -31,6 +31,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DeleteOutline
@@ -50,16 +53,21 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.encer.splitwise.ui.components.EmptyStateCard
 import com.encer.splitwise.ui.components.HeroCard
@@ -71,6 +79,7 @@ import com.encer.splitwise.ui.components.appSectionEnter
 import com.encer.splitwise.ui.components.appTopBarColors
 import com.encer.splitwise.ui.formatting.formatDate
 import com.encer.splitwise.ui.localization.appStrings
+import com.encer.splitwise.ui.localization.resolveUserFacingSyncError
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -79,6 +88,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 @Composable
 fun GroupsScreen(onOpenGroup: (String) -> Unit) {
@@ -103,6 +113,7 @@ fun GroupsScreen(onOpenGroup: (String) -> Unit) {
         onLeaveGroup = { viewModel.leaveGroup(it) },
         onAcceptInvite = { viewModel.acceptInvite(it) },
         onRejectInvite = { viewModel.rejectInvite(it) },
+        onRefresh = viewModel::refresh,
     )
 }
 
@@ -122,11 +133,28 @@ internal fun GroupsContent(
     onLeaveGroup: (String) -> Unit,
     onAcceptInvite: (String) -> Unit,
     onRejectInvite: (String) -> Unit,
+    onRefresh: () -> Unit,
 ) {
     val strings = appStrings()
     val focusManager = LocalFocusManager.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
     var searchQuery by rememberSaveable { mutableStateOf("") }
+    var refreshRequestedByUser by rememberSaveable { mutableStateOf(false) }
     val showSearch = uiState.groups.size > 4
+    val refreshEnabled = !uiState.isRefreshing
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = uiState.isRefreshing,
+        onRefresh = {
+            if (!refreshEnabled) return@rememberPullRefreshState
+            if (!uiState.canRefresh) {
+                coroutineScope.launch { snackbarHostState.showSnackbar(strings.syncLoginRequired) }
+                return@rememberPullRefreshState
+            }
+            refreshRequestedByUser = true
+            onRefresh()
+        }
+    )
     val filteredGroups = remember(uiState.groups, searchQuery) {
         val query = searchQuery.trim()
         if (query.isBlank()) {
@@ -136,9 +164,18 @@ internal fun GroupsContent(
         }
     }
 
+    LaunchedEffect(uiState.isRefreshing, uiState.errorMessage, refreshRequestedByUser) {
+        if (!refreshRequestedByUser || uiState.isRefreshing) return@LaunchedEffect
+        resolveUserFacingSyncError(uiState.errorMessage, strings)?.let { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+        refreshRequestedByUser = false
+    }
+
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(strings.appTitle, style = MaterialTheme.typography.titleLarge) },
@@ -151,218 +188,236 @@ internal fun GroupsContent(
             )
         }
     ) { padding ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 18.dp)
-                .pointerInput(showSearch) {
-                    if (showSearch) {
-                        detectTapGestures(onTap = { focusManager.clearFocus() })
-                    }
-                }
-                .animateContentSize(),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .pullRefresh(pullRefreshState, enabled = refreshEnabled || !uiState.canRefresh)
         ) {
-            item {
-                HeroCard(
-                    title = strings.homeHeroTitle,
-                    subtitle = strings.homeHeroSubtitle,
-                    icon = { Icon(Icons.Rounded.Groups, contentDescription = null) }
-                )
-            }
-            item {
-                Text(
-                    strings.invitesTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            if (uiState.isLoading && uiState.invites.isEmpty()) {
-                items(2) {
-                    InviteSkeletonCard(
-                        modifier = Modifier.animateContentSize()
-                    )
-                }
-            }
-            if (uiState.invites.isEmpty() && !uiState.isLoading) {
-                item {
-                    EmptyStateCard(strings.noInvitesTitle, strings.noInvitesSubtitle)
-                }
-            }
-            items(uiState.invites, key = { it.id }) { invite ->
-                ElevatedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateContentSize(),
-                    shape = RoundedCornerShape(28.dp),
-                    colors = appCardColors(),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.14f), CircleShape)
-                                    .border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.22f),
-                                        shape = CircleShape
-                                    )
-                                    .padding(12.dp)
-                            ) {
-                                Icon(
-                                    Icons.Rounded.MailOutline,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.secondary
-                                )
-                            }
-                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(
-                                    invite.groupName,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    "@${invite.inviterUsername}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.secondary
-                                )
-                            }
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.14f))
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = { onRejectInvite(invite.id) },
-                                modifier = Modifier.weight(1f),
-                                border = androidx.compose.foundation.BorderStroke(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
-                                ),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.08f),
-                                    contentColor = MaterialTheme.colorScheme.error
-                                )
-                            ) {
-                                Text(strings.rejectInvite, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
-                            }
-                            OutlinedButton(
-                                onClick = { onAcceptInvite(invite.id) },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                ),
-                                border = androidx.compose.foundation.BorderStroke(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                                )
-                            ) {
-                                Text(strings.acceptInvite, style = MaterialTheme.typography.labelLarge)
-                            }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 18.dp)
+                    .pointerInput(showSearch) {
+                        if (showSearch) {
+                            detectTapGestures(onTap = { focusManager.clearFocus() })
                         }
                     }
-                }
-            }
-            if (uiState.isLoading && uiState.groups.isEmpty()) {
-                items(3) {
-                    GroupSkeletonCard(
-                        modifier = Modifier.animateContentSize()
-                    )
-                }
-            }
-            item {
-                Text(
-                    strings.groupsSectionTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            item {
-                AppAnimatedSection(visible = showSearch, enter = appSectionEnter(delayMillis = 40)) {
-                    GroupSearchField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        label = strings.searchGroupsLabel,
-                        onClear = { searchQuery = "" }
-                    )
-                }
-            }
-            if (!uiState.isLoading && filteredGroups.isEmpty()) {
+                    .animateContentSize(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
                 item {
-                    EmptyStateCard(
-                        title = if (showSearch && searchQuery.isNotBlank()) strings.noSearchResultsTitle else strings.noGroupsTitle,
-                        subtitle = if (showSearch && searchQuery.isNotBlank()) strings.noSearchResultsSubtitle else strings.noGroupsSubtitle
+                    HeroCard(
+                        title = strings.homeHeroTitle,
+                        subtitle = strings.homeHeroSubtitle,
+                        icon = { Icon(Icons.Rounded.Groups, contentDescription = null) }
                     )
                 }
-            }
-            items(filteredGroups, key = { it.id }) { group ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateContentSize(),
-                    shape = RoundedCornerShape(28.dp),
-                    colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)),
-                    onClick = { onOpenGroup(group.id) }
-                ) {
-                    Column(
+                item {
+                    Text(
+                        strings.invitesTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                if (uiState.isLoading && uiState.invites.isEmpty()) {
+                    items(1) {
+                        InviteSkeletonCard(
+                            modifier = Modifier.animateContentSize()
+                        )
+                    }
+                }
+                if (uiState.invites.isEmpty() && !uiState.isLoading) {
+                    item {
+                        EmptyStateCard(strings.noInvitesTitle, strings.noInvitesSubtitle)
+                    }
+                }
+                items(uiState.invites, key = { it.id }) { invite ->
+                    ElevatedCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
-                                shape = RoundedCornerShape(28.dp)
-                            )
-                            .padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                            .animateContentSize(),
+                        shape = RoundedCornerShape(28.dp),
+                        colors = appCardColors(),
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(
+                            modifier = Modifier
+                                .padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.14f), CircleShape)
+                                        .border(
+                                            width = 1.dp,
+                                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.22f),
+                                            shape = CircleShape
+                                        )
+                                        .padding(12.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.MailOutline,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
+                                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(
+                                        invite.groupName,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        "@${invite.inviterUsername}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
+                            }
                             Box(
                                 modifier = Modifier
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape)
-                                    .padding(12.dp)
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.14f))
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Icon(Icons.Rounded.Groups, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    group.name,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(formatDate(group.createdAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            IconButton(onClick = { onEditingGroupChange(group.id) }) {
-                                Icon(
-                                    Icons.Rounded.Edit,
-                                    contentDescription = strings.edit,
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                            IconButton(onClick = { onPendingGroupActionChange(group.id) }) {
-                                Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
+                                OutlinedButton(
+                                    onClick = { onRejectInvite(invite.id) },
+                                    modifier = Modifier.weight(1f),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                                    ),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.08f),
+                                        contentColor = MaterialTheme.colorScheme.error
+                                    )
+                                ) {
+                                    Text(strings.rejectInvite, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
+                                }
+                                OutlinedButton(
+                                    onClick = { onAcceptInvite(invite.id) },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                                    )
+                                ) {
+                                    Text(strings.acceptInvite, style = MaterialTheme.typography.labelLarge)
+                                }
                             }
                         }
                     }
                 }
+                item {
+                    if (uiState.isLoading && uiState.groups.isEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                            repeat(3) {
+                                GroupSkeletonCard(
+                                    modifier = Modifier.animateContentSize()
+                                )
+                            }
+                        }
+                    }
+                }
+                item {
+                    Text(
+                        strings.groupsSectionTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                item {
+                    AppAnimatedSection(visible = showSearch, enter = appSectionEnter(delayMillis = 40)) {
+                        GroupSearchField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            label = strings.searchGroupsLabel,
+                            onClear = { searchQuery = "" }
+                        )
+                    }
+                }
+                if (!uiState.isLoading && filteredGroups.isEmpty()) {
+                    item {
+                        EmptyStateCard(
+                            title = if (showSearch && searchQuery.isNotBlank()) strings.noSearchResultsTitle else strings.noGroupsTitle,
+                            subtitle = if (showSearch && searchQuery.isNotBlank()) strings.noSearchResultsSubtitle else strings.noGroupsSubtitle
+                        )
+                    }
+                }
+                items(filteredGroups, key = { it.id }) { group ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateContentSize(),
+                        shape = RoundedCornerShape(28.dp),
+                        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)),
+                        onClick = { onOpenGroup(group.id) }
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                                    shape = RoundedCornerShape(28.dp)
+                                )
+                                .padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape)
+                                        .padding(12.dp)
+                                ) {
+                                    Icon(Icons.Rounded.Groups, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        group.name,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(formatDate(group.createdAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                IconButton(onClick = { onEditingGroupChange(group.id) }) {
+                                    Icon(
+                                        Icons.Rounded.Edit,
+                                        contentDescription = strings.edit,
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                IconButton(onClick = { onPendingGroupActionChange(group.id) }) {
+                                    Icon(Icons.Rounded.DeleteOutline, contentDescription = strings.delete, tint = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                        }
+                    }
+                }
+                item { Spacer(Modifier.padding(12.dp)) }
             }
-            item { Spacer(Modifier.padding(12.dp)) }
+
+            PullRefreshIndicator(
+                refreshing = uiState.isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .testTag("groupsPullToRefreshIndicator"),
+            )
         }
     }
 

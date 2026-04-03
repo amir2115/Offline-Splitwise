@@ -13,4 +13,7 @@ data class GroupDashboardUiState(
     val expenses: List<Expense> = emptyList(),
     val settlements: List<Settlement> = emptyList(),
     val canCreateTransactions: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val refreshError: String? = null,
+    val canRefresh: Boolean = false,
 )

@@ -116,6 +116,7 @@ fun GroupsScreenPreviewScenario(
             onLeaveGroup = {},
             onAcceptInvite = {},
             onRejectInvite = {},
+            onRefresh = {},
         )
     }
 }
@@ -130,6 +131,7 @@ fun GroupDashboardPreviewScenario(
             uiState = previewGroupDashboardUiState(),
             groupId = "group-trip",
             onBack = {},
+            onRefresh = {},
             onOpenMembers = {},
             onAddExpense = {},
             onAddSettlement = {},

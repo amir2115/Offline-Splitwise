@@ -66,9 +66,11 @@ class GroupsViewModel @Inject constructor(
             groups = groups,
             invites = nextInvites,
             isLoading = hasSession && (nextInvitesLoading || (groups.isEmpty() && syncStatus.isSyncing)),
+            isRefreshing = hasSession && syncStatus.isSyncing,
             canLeaveGroups = hasSession,
             currentUserId = session?.userId,
-            errorMessage = nextError,
+            errorMessage = nextError ?: syncStatus.lastError,
+            canRefresh = hasSession,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GroupsUiState())
 
@@ -98,24 +100,15 @@ class GroupsViewModel @Inject constructor(
             invitesLoading.value = false
             return
         }
-        viewModelScope.launch {
-            invitesLoading.value = true
-            runCatching { apiClient.listGroupInvites().map { it.toDomain() } }
-                .onSuccess {
-                    invites.value = it
-                    error.value = null
-                }
-                .onFailure { error.value = it.message }
-            invitesLoading.value = false
-        }
+        viewModelScope.launch { refreshInvitesNow() }
     }
 
     fun acceptInvite(inviteId: String) {
         viewModelScope.launch {
             runCatching { apiClient.acceptGroupInvite(inviteId) }
                 .onSuccess {
-                    refreshInvites()
-                    syncCoordinator.requestSync()
+                    refreshInvitesNow()
+                    syncCoordinator.syncIfPossible(forceNetworkRequest = true)
                 }
                 .onFailure { error.value = it.message }
         }
@@ -125,9 +118,33 @@ class GroupsViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { apiClient.rejectGroupInvite(inviteId) }
                 .onSuccess {
-                    refreshInvites()
+                    refreshInvitesNow()
                 }
                 .onFailure { error.value = it.message }
         }
+    }
+
+    fun refresh() {
+        if (sessionRepository.currentSession() == null) return
+        viewModelScope.launch {
+            refreshInvitesNow()
+            syncCoordinator.syncIfPossible(forceNetworkRequest = true)
+        }
+    }
+
+    private suspend fun refreshInvitesNow() {
+        if (sessionRepository.currentSession() == null) {
+            invites.value = emptyList()
+            invitesLoading.value = false
+            return
+        }
+        invitesLoading.value = true
+        runCatching { apiClient.listGroupInvites().map { it.toDomain() } }
+            .onSuccess {
+                invites.value = it
+                error.value = null
+            }
+            .onFailure { error.value = it.message }
+        invitesLoading.value = false
     }
 }

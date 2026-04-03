@@ -16,6 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
@@ -52,6 +56,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.encer.splitwise.domain.model.Expense
@@ -80,9 +85,10 @@ import com.encer.splitwise.ui.formatting.formatAmountCompact
 import com.encer.splitwise.ui.formatting.formatDate
 import com.encer.splitwise.ui.localization.LocalAppLanguage
 import com.encer.splitwise.ui.localization.appStrings
+import com.encer.splitwise.ui.localization.resolveUserFacingSyncError
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun GroupDashboardScreen(
     groupId: String,
@@ -100,6 +106,7 @@ fun GroupDashboardScreen(
         uiState = uiState,
         groupId = groupId,
         onBack = onBack,
+        onRefresh = viewModel::refresh,
         onOpenMembers = onOpenMembers,
         onAddExpense = onAddExpense,
         onAddSettlement = onAddSettlement,
@@ -110,12 +117,13 @@ fun GroupDashboardScreen(
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 internal fun GroupDashboardContent(
     uiState: GroupDashboardUiState,
     groupId: String,
     onBack: () -> Unit,
+    onRefresh: () -> Unit,
     onOpenMembers: () -> Unit,
     onAddExpense: () -> Unit,
     onAddSettlement: () -> Unit,
@@ -128,9 +136,33 @@ internal fun GroupDashboardContent(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var contentVisible by remember(groupId) { mutableStateOf(false) }
+    var refreshRequestedByUser by remember(groupId) { mutableStateOf(false) }
+    val refreshEnabled = !uiState.isRefreshing
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = uiState.isRefreshing,
+        onRefresh = {
+            if (!refreshEnabled) return@rememberPullRefreshState
+            if (!uiState.canRefresh) {
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(strings.syncLoginRequired)
+                }
+                return@rememberPullRefreshState
+            }
+            refreshRequestedByUser = true
+            onRefresh()
+        }
+    )
 
     LaunchedEffect(groupId) {
         contentVisible = true
+    }
+
+    LaunchedEffect(uiState.isRefreshing, uiState.refreshError, refreshRequestedByUser) {
+        if (!refreshRequestedByUser || uiState.isRefreshing) return@LaunchedEffect
+        resolveUserFacingSyncError(uiState.refreshError, strings)?.let { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+        refreshRequestedByUser = false
     }
 
     Scaffold(
@@ -153,11 +185,12 @@ internal fun GroupDashboardContent(
             modifier = Modifier
                 .fillMaxSize()
                 .background(appBackgroundBrush(isDark = MaterialTheme.colorScheme.background.luminance() <= 0.5f))
+                .padding(padding)
+                .pullRefresh(pullRefreshState, enabled = refreshEnabled || !uiState.canRefresh)
         ) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -270,6 +303,14 @@ internal fun GroupDashboardContent(
                 }
                 item { Spacer(Modifier.height(24.dp)) }
             }
+
+            PullRefreshIndicator(
+                refreshing = uiState.isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .testTag("groupDashboardPullToRefreshIndicator"),
+            )
         }
     }
 }
@@ -339,8 +380,6 @@ private fun ExpenseCard(expense: Expense, members: List<Member>, onClick: () -> 
                     }
                 }
             }
-            DetailLine(strings.peopleCountStat, formatAmountCompact(expense.shares.size))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
             Text(strings.payersTitle, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             expense.payers.forEach { payer ->
                 DetailLine(memberName(members, payer.memberId), formatAmount(payer.amount))
