@@ -1,6 +1,7 @@
 package com.encer.splitwise.features.expense_editor
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -19,6 +20,8 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.Percent
 import androidx.compose.material3.AssistChip
@@ -44,9 +47,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -293,6 +298,16 @@ private fun MemberEditorCard(
     val strings = appStrings()
     val hasPositiveTotal = (parseAmountInputOrNull(uiState.totalAmountInput) ?: 0) > 0
     val hasPayerAmount = member.payerAmountInput.isNotBlank()
+    val receiptItems = remember(uiState.taxAmountPreview, uiState.serviceCharges, uiState.members, member.memberId) {
+        buildMemberReceiptItems(
+            uiState = uiState,
+            member = member,
+            taxLabel = strings.taxAmountLabel,
+        ) { index ->
+            strings.serviceChargeItemTitle(index)
+        }
+    }
+    var receiptItemsExpanded by rememberSaveable(member.memberId) { mutableStateOf(false) }
     ElevatedCard(shape = RoundedCornerShape(24.dp), colors = appCardColors()) {
         Column(
             modifier = Modifier
@@ -397,9 +412,40 @@ private fun MemberEditorCard(
                 } else {
                     DetailLine(label = strings.baseShareLabel, value = formatAmount(member.baseSharePreview))
                 }
-                DetailLine(label = strings.taxShareLabel, value = formatAmount(member.taxSharePreview))
-                DetailLine(label = strings.serviceChargeShareLabel, value = formatAmount(member.serviceChargeSharePreview))
                 DetailLine(label = strings.finalShareLabel, value = formatAmount(member.finalSharePreview))
+                AppAnimatedVisibility(visible = receiptItems.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedButton(
+                            onClick = { receiptItemsExpanded = !receiptItemsExpanded },
+                            colors = appOutlinedButtonColors(),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(
+                                if (receiptItemsExpanded) strings.hideDetailsLabel else strings.showDetailsLabel,
+                                style = MaterialTheme.typography.labelLarge,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                imageVector = if (receiptItemsExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        AppAnimatedVisibility(visible = receiptItemsExpanded) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (member.taxSharePreview > 0) {
+                                    DetailLine(label = strings.taxShareLabel, value = formatAmount(member.taxSharePreview))
+                                }
+                                if (member.serviceChargeSharePreview > 0) {
+                                    DetailLine(label = strings.serviceChargeShareLabel, value = formatAmount(member.serviceChargeSharePreview))
+                                }
+                                receiptItems.forEach { (label, amount) ->
+                                    DetailLine(label = label, value = formatAmount(amount))
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -584,6 +630,16 @@ private fun ServiceChargeEditorCard(
 @Composable
 private fun ExpenseLiveSummaryCard(uiState: ExpenseEditorUiState) {
     val strings = appStrings()
+    val receiptItems = remember(uiState.taxAmountPreview, uiState.serviceCharges) {
+        buildReceiptSummaryItems(uiState = uiState, taxLabel = strings.taxAmountLabel) { index ->
+            strings.serviceChargeItemTitle(index)
+        }
+    }
+    var receiptItemsExpanded by rememberSaveable(
+        uiState.taxAmountPreview,
+        uiState.serviceChargeTotalPreview,
+        uiState.serviceCharges.size
+    ) { mutableStateOf(false) }
     val tone = when {
         uiState.isPayerOverflow || uiState.isShareOverflow || uiState.hasInvalidServiceCharges || uiState.hasInvalidTaxPercent -> MaterialTheme.colorScheme.error
         uiState.isAmountsReady -> MaterialTheme.colorScheme.primary
@@ -609,9 +665,41 @@ private fun ExpenseLiveSummaryCard(uiState: ExpenseEditorUiState) {
             DetailLine(strings.remainingPayersTitle, formatAmount(uiState.remainingPayerAmount.coerceAtLeast(0)))
             DetailLine(strings.enteredSharesTitle, formatAmount(uiState.shareTotal))
             DetailLine(strings.remainingSharesTitle, formatAmount(uiState.remainingShareAmount.coerceAtLeast(0)))
-            DetailLine(strings.taxAmountLabel, formatAmount(uiState.taxAmountPreview))
-            DetailLine(strings.serviceChargesTotalLabel, formatAmount(uiState.serviceChargeTotalPreview))
             DetailLine(strings.finalSharesTitle, formatAmount(uiState.finalShareTotal))
+            AppAnimatedVisibility(visible = receiptItems.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(
+                        onClick = { receiptItemsExpanded = !receiptItemsExpanded },
+                        colors = appOutlinedButtonColors(),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text(
+                            if (receiptItemsExpanded) strings.hideDetailsLabel else strings.showDetailsLabel,
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.weight(1f),
+                            color = tone
+                        )
+                        Icon(
+                            imageVector = if (receiptItemsExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                            contentDescription = null,
+                            tint = tone
+                        )
+                    }
+                    AppAnimatedVisibility(visible = receiptItemsExpanded) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (uiState.taxAmountPreview > 0) {
+                                DetailLine(strings.taxAmountLabel, formatAmount(uiState.taxAmountPreview))
+                            }
+                            if (uiState.serviceChargeTotalPreview > 0) {
+                                DetailLine(strings.serviceChargesTotalLabel, formatAmount(uiState.serviceChargeTotalPreview))
+                            }
+                            receiptItems.forEach { (label, amount) ->
+                                DetailLine(label, formatAmount(amount))
+                            }
+                        }
+                    }
+                }
+            }
             AppAnimatedVisibility(
                 visible = uiState.isPayerOverflow || uiState.isShareOverflow || uiState.hasInvalidServiceCharges || uiState.hasInvalidTaxPercent
             ) {
@@ -643,4 +731,49 @@ private fun buildEqualPreview(uiState: ExpenseEditorUiState, memberId: String): 
     if (uiState.splitType != SplitType.EQUAL) return "-"
     val member = uiState.members.firstOrNull { it.memberId == memberId } ?: return "-"
     return formatAmount(member.baseSharePreview)
+}
+
+private fun buildReceiptSummaryItems(
+    uiState: ExpenseEditorUiState,
+    taxLabel: String,
+    fallbackServiceChargeTitle: (Int) -> String,
+): List<Pair<String, Int>> {
+    val items = mutableListOf<Pair<String, Int>>()
+    if (uiState.taxAmountPreview > 0) {
+        items += taxLabel to uiState.taxAmountPreview
+    }
+    uiState.serviceCharges.forEachIndexed { index, charge ->
+        val amount = parseAmountInput(charge.amountInput)
+        if (amount > 0) {
+            val title = charge.title.ifBlank { fallbackServiceChargeTitle(index + 1) }
+            items += title to amount
+        }
+    }
+    return items
+}
+
+private fun buildMemberReceiptItems(
+    uiState: ExpenseEditorUiState,
+    member: MemberDraftUi,
+    taxLabel: String,
+    fallbackServiceChargeTitle: (Int) -> String,
+): List<Pair<String, Int>> {
+    val items = mutableListOf<Pair<String, Int>>()
+    if (member.taxSharePreview > 0) {
+        items += taxLabel to member.taxSharePreview
+    }
+    val includedMemberIds = uiState.members
+        .filter { it.includedInSplit }
+        .map { it.memberId }
+    uiState.serviceCharges.forEachIndexed { index, charge ->
+        val amount = parseAmountInput(charge.amountInput)
+        if (amount <= 0) return@forEachIndexed
+        val selectedIds = includedMemberIds.filter { it in charge.selectedMemberIds }
+        if (member.memberId !in selectedIds || selectedIds.isEmpty()) return@forEachIndexed
+        val memberAmount = splitAmountDeterministically(amount, selectedIds)[member.memberId] ?: 0
+        if (memberAmount <= 0) return@forEachIndexed
+        val title = charge.title.ifBlank { fallbackServiceChargeTitle(index + 1) }
+        items += title to memberAmount
+    }
+    return items
 }
