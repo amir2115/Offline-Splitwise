@@ -84,7 +84,7 @@ fun SettingsScreen(
         !isApiReachable && !lastHealthWasSuccessful -> strings.syncServerIssue
         else -> strings.syncSubtitle
     }
-    val syncSupportingColor = if (canSync && (isSyncing || !effectiveOnline || !syncError.isNullOrBlank() || (!isApiReachable && !lastHealthWasSuccessful))) {
+    val syncSupportingColor = if (canSync && (!effectiveOnline || !syncError.isNullOrBlank() || (!isApiReachable && !lastHealthWasSuccessful))) {
         MaterialTheme.colorScheme.error
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
