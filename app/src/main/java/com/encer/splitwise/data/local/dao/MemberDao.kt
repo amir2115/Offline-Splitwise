@@ -41,6 +41,25 @@ interface MemberDao {
     @Query("DELETE FROM members WHERE id IN (:memberIds)")
     suspend fun hardDeleteByIds(memberIds: List<String>)
 
+    @Query(
+        """
+        UPDATE members
+        SET deletedAt = :deletedAt,
+            updatedAt = :updatedAt,
+            syncState = :syncState
+        WHERE id IN (:memberIds)
+        """
+    )
+    suspend fun markDeletedByIds(
+        memberIds: List<String>,
+        deletedAt: Long,
+        updatedAt: Long,
+        syncState: SyncState = SyncState.SYNCED,
+    )
+
+    @Query("SELECT id FROM members WHERE groupId = :groupId AND userId = :userId AND id != :keepId")
+    suspend fun getDuplicateIdsByGroupAndUserId(groupId: String, userId: String, keepId: String): List<String>
+
     @Query("DELETE FROM members WHERE groupId = :groupId AND userId = :userId AND id != :keepId")
     suspend fun hardDeleteByGroupAndUserIdExceptId(groupId: String, userId: String, keepId: String)
 }

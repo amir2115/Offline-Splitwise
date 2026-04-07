@@ -31,8 +31,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,13 +42,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.encer.splitwise.data.remote.model.ApiError
 import com.encer.splitwise.domain.model.MembershipStatus
 import com.encer.splitwise.ui.components.EmptyStateCard
 import com.encer.splitwise.ui.components.NameDialog
 import com.encer.splitwise.ui.components.appCardColors
 import com.encer.splitwise.ui.components.appTopBarColors
 import com.encer.splitwise.ui.formatting.formatDate
+import com.encer.splitwise.ui.localization.AppStrings
 import com.encer.splitwise.ui.localization.appStrings
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun MembersScreen(groupId: String, onBack: () -> Unit) {
@@ -56,6 +63,22 @@ fun MembersScreen(groupId: String, onBack: () -> Unit) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var editingMemberId by rememberSaveable { mutableStateOf<String?>(null) }
     var deletingMemberId by rememberSaveable { mutableStateOf<String?>(null) }
+    var addMemberErrorMessage by remember(showDialog) { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(uiState.actionError) {
+        val error = uiState.actionError ?: return@LaunchedEffect
+        if (showDialog) {
+            addMemberErrorMessage = resolveMemberActionError(error, strings)
+        }
+        viewModel.consumeActionError()
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.memberAddedEvents.collectLatest {
+            addMemberErrorMessage = null
+            showDialog = false
+        }
+    }
 
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -146,10 +169,15 @@ fun MembersScreen(groupId: String, onBack: () -> Unit) {
             initialValue = "",
             placeholder = strings.memberPlaceholder,
             confirmLabel = strings.saveMember,
-            onDismiss = { showDialog = false },
-            onConfirm = {
-                viewModel.addMember(it)
+            errorMessage = addMemberErrorMessage,
+            isLoading = uiState.isSubmittingMember,
+            onDismiss = {
+                addMemberErrorMessage = null
                 showDialog = false
+            },
+            onConfirm = {
+                addMemberErrorMessage = null
+                viewModel.addMember(it)
             }
         )
     }
@@ -208,5 +236,50 @@ fun MembersScreen(groupId: String, onBack: () -> Unit) {
                 }
             )
         }
+    }
+}
+
+private val membersErrorJson = Json { ignoreUnknownKeys = true }
+
+@Serializable
+private data class MembersErrorEnvelope(
+    val error: MembersErrorPayload? = null,
+)
+
+@Serializable
+private data class MembersErrorPayload(
+    val code: String? = null,
+    val details: List<MembersValidationDetail> = emptyList(),
+)
+
+@Serializable
+private data class MembersValidationDetail(
+    val loc: List<String> = emptyList(),
+    val msg: String? = null,
+)
+
+private fun resolveMemberActionError(error: Throwable, strings: AppStrings): String {
+    val message = error.message?.lowercase().orEmpty()
+    if (
+        "unable to resolve host" in message ||
+        "failed to connect" in message ||
+        "timeout" in message ||
+        "timed out" in message ||
+        "no address associated with hostname" in message
+    ) {
+        return strings.authNetworkError
+    }
+    val apiError = error as? ApiError ?: return strings.memberActionFailed
+    val code = apiError.payload?.let { payload ->
+        runCatching {
+            membersErrorJson.decodeFromString(MembersErrorEnvelope.serializer(), payload).error?.code
+        }.getOrNull()
+    }
+
+    return when (code) {
+        "username_not_found" -> strings.memberUsernameNotFound
+        "already_member" -> strings.memberAlreadyExists
+        "validation_error" -> strings.memberUsernameInvalid
+        else -> apiError.message ?: strings.memberActionFailed
     }
 }

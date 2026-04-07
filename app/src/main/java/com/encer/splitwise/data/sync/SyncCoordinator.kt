@@ -7,6 +7,7 @@ import com.encer.splitwise.data.local.dao.MemberDao
 import com.encer.splitwise.data.local.db.SplitwiseDatabase
 import com.encer.splitwise.data.local.dao.SettlementDao
 import com.encer.splitwise.data.local.dao.SyncDao
+import com.encer.splitwise.data.local.entity.MemberEntity
 import com.encer.splitwise.data.local.entity.SyncState
 import com.encer.splitwise.data.local.dao.TransactionDao
 import com.encer.splitwise.data.preferences.AuthSession
@@ -147,6 +148,7 @@ class SyncCoordinator(
                     performIncrementalSync()
                 }
             }.onFailure { error ->
+                // FOREIGN KEY constraint failed (code 787 SQLITE_CONSTRAINT_FOREIGNKEY)
                 val blockers = parseInvalidMemberIssues(error)
                 _syncStatus.value = _syncStatus.value.copy(
                     isSyncing = false,
@@ -258,20 +260,13 @@ class SyncCoordinator(
     }
 
     private suspend fun applySyncResponse(response: SyncResponse) {
+        val serverTimestamp = parseIsoInstant(response.serverTime)
         database.withTransaction {
             if (response.changes.groups.isNotEmpty()) groupDao.upsertAll(response.changes.groups.map { it.toEntity() })
             if (response.changes.members.isNotEmpty()) {
                 memberDao.upsertAll(response.changes.members.map { it.toEntity() })
-                response.changes.members.forEach { member ->
-                    member.userId?.let { userId ->
-                        memberDao.hardDeleteByGroupAndUserIdExceptId(
-                            groupId = member.groupId,
-                            userId = userId,
-                            keepId = member.id,
-                        )
-                    }
-                }
             }
+            ensureReferencedMembersExist(response, serverTimestamp)
             if (response.changes.expenses.isNotEmpty()) {
                 syncDao.replaceExpenses(
                     expenses = response.changes.expenses.map { it.toEntity() },
@@ -284,8 +279,23 @@ class SyncCoordinator(
             }
             if (response.changes.deletedExpenseIds.isNotEmpty()) expenseDao.hardDeleteExpenses(response.changes.deletedExpenseIds)
             if (response.changes.deletedSettlementIds.isNotEmpty()) settlementDao.hardDeleteByIds(response.changes.deletedSettlementIds)
-            if (response.changes.deletedMemberIds.isNotEmpty()) memberDao.hardDeleteByIds(response.changes.deletedMemberIds)
+            if (response.changes.deletedMemberIds.isNotEmpty()) {
+                applyDeletedMembers(
+                    memberIds = response.changes.deletedMemberIds,
+                    deletedAt = serverTimestamp,
+                )
+            }
             if (response.changes.deletedGroupIds.isNotEmpty()) groupDao.hardDeleteByIds(response.changes.deletedGroupIds)
+
+            response.changes.members.forEach { member ->
+                member.userId?.let { userId ->
+                    cleanupDuplicateMembers(
+                        groupId = member.groupId,
+                        userId = userId,
+                        keepId = member.id,
+                    )
+                }
+            }
         }
 
         sessionRepository.setLastSyncedAt(parseIsoInstant(response.nextCursor))
@@ -306,6 +316,71 @@ class SyncCoordinator(
             database.clearAllTables()
             sessionRepository.setLastSyncedAt(null)
             _syncStatus.value = SyncStatus()
+        }
+    }
+
+    private suspend fun cleanupDuplicateMembers(groupId: String, userId: String, keepId: String) {
+        val duplicateIds = memberDao.getDuplicateIdsByGroupAndUserId(
+            groupId = groupId,
+            userId = userId,
+            keepId = keepId,
+        )
+        if (duplicateIds.isEmpty()) return
+        val removableIds = duplicateIds.filterNot { duplicateId ->
+            syncDao.hasMemberReferences(duplicateId)
+        }
+        if (removableIds.isNotEmpty()) {
+            memberDao.hardDeleteByIds(removableIds)
+        }
+    }
+
+    private suspend fun ensureReferencedMembersExist(response: SyncResponse, timestamp: Long) {
+        val memberGroupIds = linkedMapOf<String, String>()
+
+        response.changes.expenses.forEach { expense ->
+            expense.payers.forEach { payer -> memberGroupIds.putIfAbsent(payer.memberId, expense.groupId) }
+            expense.shares.forEach { share -> memberGroupIds.putIfAbsent(share.memberId, expense.groupId) }
+        }
+        response.changes.settlements.forEach { settlement ->
+            memberGroupIds.putIfAbsent(settlement.fromMemberId, settlement.groupId)
+            memberGroupIds.putIfAbsent(settlement.toMemberId, settlement.groupId)
+        }
+
+        if (memberGroupIds.isEmpty()) return
+
+        val placeholders = memberGroupIds.mapNotNull { (memberId, groupId) ->
+            if (memberDao.getById(memberId) != null) return@mapNotNull null
+            MemberEntity(
+                id = memberId,
+                groupId = groupId,
+                username = memberId,
+                createdAt = timestamp,
+                updatedAt = timestamp,
+                deletedAt = timestamp,
+                isArchived = true,
+                userId = null,
+                membershipStatus = com.encer.splitwise.domain.model.MembershipStatus.ACTIVE,
+                syncState = SyncState.SYNCED,
+            )
+        }
+        if (placeholders.isNotEmpty()) {
+            memberDao.upsertAll(placeholders)
+        }
+    }
+
+    private suspend fun applyDeletedMembers(memberIds: List<String>, deletedAt: Long) {
+        val (referencedIds, removableIds) = memberIds.distinct().partition { memberId ->
+            syncDao.hasMemberReferences(memberId)
+        }
+        if (referencedIds.isNotEmpty()) {
+            memberDao.markDeletedByIds(
+                memberIds = referencedIds,
+                deletedAt = deletedAt,
+                updatedAt = deletedAt,
+            )
+        }
+        if (removableIds.isNotEmpty()) {
+            memberDao.hardDeleteByIds(removableIds)
         }
     }
 }

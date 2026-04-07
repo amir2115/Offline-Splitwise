@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.withLock
 
 class ApiClient @Inject constructor(
     private val authRemoteDataSource: AuthRemoteDataSource,
+    private val membersRemoteDataSource: MembersRemoteDataSource,
     private val syncRemoteDataSource: SyncRemoteDataSource,
     private val groupInvitesRemoteDataSource: GroupInvitesRemoteDataSource,
     private val healthRemoteDataSource: HealthRemoteDataSource,
@@ -24,6 +25,17 @@ class ApiClient @Inject constructor(
         authRemoteDataSource.login(AuthLoginRequest(username = username, password = password))
 
     suspend fun me(): ApiUser = executeAuthenticated { authRemoteDataSource.me() }
+
+    suspend fun createMember(groupId: String, username: String, isArchived: Boolean = false): RemoteAddMemberResponse =
+        executeAuthenticated {
+            membersRemoteDataSource.create(
+                RemoteMemberCreateRequest(
+                    groupId = groupId,
+                    username = username,
+                    isArchived = isArchived,
+                )
+            )
+        }
 
     suspend fun sync(request: SyncRequestEnvelope): SyncResponse =
         executeAuthenticated { syncRemoteDataSource.sync(request) }

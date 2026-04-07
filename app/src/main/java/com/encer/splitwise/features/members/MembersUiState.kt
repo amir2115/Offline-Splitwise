@@ -8,4 +8,6 @@ data class MembersUiState(
     val group: Group? = null,
     val members: List<Member> = emptyList(),
     val invalidUsernameMembers: List<InvalidMemberUsernameIssue> = emptyList(),
+    val actionError: Throwable? = null,
+    val isSubmittingMember: Boolean = false,
 )

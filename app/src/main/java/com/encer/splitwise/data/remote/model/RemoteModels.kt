@@ -151,6 +151,19 @@ data class RemoteMemberPayload(
 )
 
 @Serializable
+data class RemoteMemberCreateRequest(
+    @SerialName("group_id") val groupId: String,
+    val username: String,
+    @SerialName("is_archived") val isArchived: Boolean = false,
+)
+
+@Serializable
+data class RemoteAddMemberResponse(
+    val outcome: String,
+    val member: RemoteMember,
+)
+
+@Serializable
 data class RemoteGroupInvite(
     val id: String,
     @SerialName("group_id") val groupId: String,

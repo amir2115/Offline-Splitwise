@@ -31,6 +31,21 @@ interface SyncDao {
     @Upsert
     suspend fun upsertShares(shares: List<ExpenseShareEntity>)
 
+    @Query(
+        """
+        SELECT EXISTS(
+            SELECT 1 FROM expense_payers WHERE memberId = :memberId
+            UNION ALL
+            SELECT 1 FROM expense_shares WHERE memberId = :memberId
+            UNION ALL
+            SELECT 1 FROM settlements WHERE fromMemberId = :memberId
+            UNION ALL
+            SELECT 1 FROM settlements WHERE toMemberId = :memberId
+        )
+        """
+    )
+    suspend fun hasMemberReferences(memberId: String): Boolean
+
     @Transaction
     suspend fun replaceExpenseParticipants(payers: List<ExpensePayerEntity>, shares: List<ExpenseShareEntity>) {
         val expenseIds = (payers.map { it.expenseId } + shares.map { it.expenseId }).distinct()

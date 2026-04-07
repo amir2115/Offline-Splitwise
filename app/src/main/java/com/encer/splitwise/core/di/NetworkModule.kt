@@ -4,6 +4,7 @@ import com.encer.splitwise.BuildConfig
 import com.encer.splitwise.data.remote.api.AuthApi
 import com.encer.splitwise.data.remote.api.GroupInvitesApi
 import com.encer.splitwise.data.remote.api.HealthApi
+import com.encer.splitwise.data.remote.api.MembersApi
 import com.encer.splitwise.data.remote.api.SyncApi
 import com.encer.splitwise.data.remote.network.AuthInterceptor
 import com.encer.splitwise.data.remote.network.StoreChannelInterceptor
@@ -85,4 +86,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideHealthApi(retrofit: Retrofit): HealthApi = retrofit.create(HealthApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideMembersApi(retrofit: Retrofit): MembersApi = retrofit.create(MembersApi::class.java)
 }

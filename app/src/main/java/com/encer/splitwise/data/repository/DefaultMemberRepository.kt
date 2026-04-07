@@ -5,6 +5,8 @@ import com.encer.splitwise.data.local.dao.MemberDao
 import com.encer.splitwise.data.local.entity.MemberEntity
 import com.encer.splitwise.data.local.entity.SyncState
 import com.encer.splitwise.data.preferences.SessionRepository
+import com.encer.splitwise.data.remote.mapper.toEntity as remoteToEntity
+import com.encer.splitwise.data.remote.network.ApiClient
 import com.encer.splitwise.data.repository.mapper.normalizeMemberIdentity
 import com.encer.splitwise.data.repository.mapper.toDomain
 import com.encer.splitwise.data.repository.mapper.toEntity
@@ -21,6 +23,7 @@ class DefaultMemberRepository @Inject constructor(
     private val memberDao: MemberDao,
     private val groupDao: GroupDao,
     private val sessionRepository: SessionRepository,
+    private val apiClient: ApiClient,
     private val syncCoordinator: SyncCoordinator
 ) : MemberRepository {
     override fun observeMembers(groupId: String): Flow<List<Member>> = memberDao.observeMembers(groupId).map { list -> list.map { it.toDomain() } }
@@ -75,13 +78,19 @@ class DefaultMemberRepository @Inject constructor(
     }
 
     override suspend fun addMember(groupId: String, username: String): String {
+        val normalizedUsername = normalizeMemberIdentity(username)
+        if (sessionRepository.currentSession() != null) {
+            val response = apiClient.createMember(groupId = groupId, username = normalizedUsername)
+            memberDao.upsert(response.member.remoteToEntity())
+            return response.member.id
+        }
         val now = System.currentTimeMillis()
         val id = UUID.randomUUID().toString()
         memberDao.upsert(
             MemberEntity(
                 id = id,
                 groupId = groupId,
-                username = normalizeMemberIdentity(username),
+                username = normalizedUsername,
                 createdAt = now,
                 updatedAt = now,
                 membershipStatus = MembershipStatus.PENDING_INVITE,
